@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
     LayoutDashboard, 
     School, 
@@ -23,6 +23,12 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
+    const router = useRouter();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+    };
 
     const links = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -57,9 +63,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                             height={100} 
                             className="object-contain"
                         />
-                        {/* <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                            MES Admin
-                        </span> */}
                     </Link>
                     <button 
                         onClick={onClose}
@@ -95,7 +98,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 </nav>
 
                 <div className="p-4 border-t border-border">
-                    <button className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors">
+                    <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                    >
                         <LogOut className="h-4 w-4" />
                         Logout
                     </button>

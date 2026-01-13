@@ -1,8 +1,18 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if we're in the browser before accessing localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      setIsLoggedIn(!!token);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-radial-gradient">
       {/* Hero Section */}
@@ -17,9 +27,15 @@ export default function Home() {
             <Link href="/events" className="px-8 py-4 bg-purple-600 rounded-full text-white font-bold hover:bg-purple-700 transition shadow-lg hover:shadow-purple-500/50">
               Explore Events
             </Link>
-            <Link href="/login" className="px-8 py-4 bg-transparent border border-gray-600 rounded-full text-gray-300 font-bold hover:border-white hover:text-white transition">
-              Admin Login
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white font-bold hover:from-purple-700 hover:to-pink-700 transition shadow-lg hover:shadow-purple-500/50">
+                Go to Dashboard
+              </Link>
+            ) : (
+              <Link href="/login" className="px-8 py-4 bg-transparent border border-gray-600 rounded-full text-gray-300 font-bold hover:border-white hover:text-white transition">
+                Admin Login
+              </Link>
+            )}
         </div>
       </section>
 
