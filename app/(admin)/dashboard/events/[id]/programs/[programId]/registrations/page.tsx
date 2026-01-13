@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star } from 'lucide-react';
+import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -28,6 +28,8 @@ export default function ProgramRegistrationsPage() {
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [pagination, setPagination] = useState<{total: number, page: number, limit: number, pages: number} | null>(null);
+    const [page, setPage] = useState(1);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -44,10 +46,10 @@ export default function ProgramRegistrationsPage() {
 
     useEffect(() => {
         if (programId) {
-            fetchRegistrations();
+            fetchRegistrations(page);
             fetchColleges();
         }
-    }, [programId]);
+    }, [programId, page]);
 
     // Debounced student search
     useEffect(() => {
@@ -95,11 +97,13 @@ export default function ProgramRegistrationsPage() {
         }
     };
 
-    const fetchRegistrations = async () => {
+    const fetchRegistrations = async (pageNum: number = 1) => {
         try {
-            const res = await api.get(`/registrations/program/${programId}`);
+            setLoading(true);
+            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50`);
             if (res.data.success) {
-                setRegistrations(res.data.data);
+                setRegistrations(res.data.registrations || []);
+                setPagination(res.data.pagination || null);
             }
         } catch (error) {
             showError(error);
@@ -447,6 +451,31 @@ export default function ProgramRegistrationsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {pagination && pagination.pages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 bg-muted/20 border-t border-border">
+                        <div className="text-xs text-muted-foreground">
+                            Showing {((page - 1) * pagination.limit) + 1} to {Math.min(page * pagination.limit, pagination.total)} of {pagination.total} results
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="p-1 rounded hover:bg-muted disabled:opacity-50 transition-colors"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <span className="text-xs font-medium">Page {page} of {pagination.pages}</span>
+                            <button 
+                                onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                                disabled={page === pagination.pages}
+                                className="p-1 rounded hover:bg-muted disabled:opacity-50 transition-colors"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
