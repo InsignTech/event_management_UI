@@ -7,8 +7,11 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'InterFest 2026 - Ultimate Inter-College Championship',
+  title: 'MES Youth Fest ',
   description: 'Join the biggest inter-college event management platform.',
+  icons: {
+    icon: '/cropped-c1494ae0-e4e0-4f74-bfdc-a1f41d30c62e_removalai_preview-32x32.png',
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +27,7 @@ export default function RootLayout({
         <main className="min-h-screen pt-16">{children}</main>
         <footer className="bg-black py-8 border-t border-gray-800">
           <div className="max-w-7xl mx-auto px-4 text-center text-gray-500">
-            <p>&copy; 2026 InterFest. All rights reserved.</p>
+            <p>&copy; 2026 MES Youth Fest. All rights reserved.</p>
           </div>
         </footer>
       </body>

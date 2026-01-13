@@ -8,7 +8,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold">Dashboard</h1>
                 <div className="text-sm text-muted-foreground">
-                    Overview of InterFest 2026
+                    Overview of MES Youth Fest
                 </div>
             </div>
 
