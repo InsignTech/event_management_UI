@@ -1,10 +1,17 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Plus, Search, Edit, Trash2, Mic2, Tv } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Mic2, Tv, Users } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import { showError, showSuccess } from '@/lib/toast';
+import MultiUserSelect from '@/components/MultiUserSelect';
+
+interface User {
+    _id: string;
+    name: string;
+    email: string;
+}
 
 interface Program {
     _id: string;
@@ -14,6 +21,7 @@ interface Program {
     venue: string;
     startTime: string;
     duration: number;
+    coordinators?: User[];
 }
 
 export default function EventProgramsPage() {
@@ -33,7 +41,8 @@ export default function EventProgramsPage() {
         category: 'on_stage',
         venue: '',
         startTime: '',
-        duration: 30
+        duration: 30,
+        coordinators: [] as string[]
     });
 
     useEffect(() => {
@@ -66,7 +75,8 @@ export default function EventProgramsPage() {
                     category: 'on_stage',
                     venue: '',
                     startTime: '',
-                    duration: 30
+                    duration: 30,
+                    coordinators: []
                 });
                 fetchPrograms();
             }
@@ -79,7 +89,12 @@ export default function EventProgramsPage() {
         e.preventDefault();
         if (!currentProgram) return;
         try {
-            const res = await api.put(`/programs/${currentProgram._id}`, currentProgram);
+            // Map coordinators to IDs only before sending to backend
+            const updateData = {
+                ...currentProgram,
+                coordinators: currentProgram.coordinators?.map(u => typeof u === 'string' ? u : u._id)
+            };
+            const res = await api.put(`/programs/${currentProgram._id}`, updateData);
             if (res.data.success) {
                 showSuccess('Program updated successfully');
                 setIsEditModalOpen(false);
@@ -197,6 +212,13 @@ export default function EventProgramsPage() {
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-1">
+                                <MultiUserSelect 
+                                    label="Program Coordinators (Optional)"
+                                    value={newProgram.coordinators}
+                                    onChange={ids => setNewProgram({...newProgram, coordinators: ids})}
+                                />
+                            </div>
                             <div className="flex gap-3 mt-6">
                                 <button 
                                     type="button"
@@ -220,7 +242,7 @@ export default function EventProgramsPage() {
             {/* Edit Modal */}
             {isEditModalOpen && currentProgram && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans">
-                    <div className="bg-card border border-border rounded-xl w-full max-w-md p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-lg p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
                         <h2 className="text-xl font-bold mb-4">Edit Program</h2>
                         <form onSubmit={handleUpdate} className="space-y-4">
                             <div className="space-y-1">
@@ -287,6 +309,14 @@ export default function EventProgramsPage() {
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-1">
+                                <MultiUserSelect 
+                                    label="Program Coordinators"
+                                    value={currentProgram.coordinators?.map(u => typeof u === 'string' ? u : u._id) || []}
+                                    initialData={currentProgram.coordinators || []}
+                                    onChange={ids => setCurrentProgram({...currentProgram, coordinators: ids as any})}
+                                />
+                            </div>
                             <div className="flex gap-3 mt-6">
                                 <button 
                                     type="button"
@@ -350,6 +380,23 @@ export default function EventProgramsPage() {
                             </div>
                             <h3 className="text-lg font-bold mb-1 truncate">{program.name}</h3>
                             <p className="text-muted-foreground text-sm mb-4 truncate">{program.venue}</p>
+                            
+                            {program.coordinators && program.coordinators.length > 0 && (
+                                <div className="mb-4">
+                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1 uppercase font-bold tracking-wider">
+                                        <Users className="h-3 w-3" />
+                                        <span>Coordinators</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {program.coordinators.map(user => (
+                                            <span key={user._id} className="text-[10px] bg-secondary px-2 py-0.5 rounded-full border border-border">
+                                                {user.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="text-xs text-muted-foreground space-y-1 mb-4">
                                 <p>Start: {new Date(program.startTime).toLocaleString()}</p>
                                 <p>Duration: {program.duration} mins</p>
