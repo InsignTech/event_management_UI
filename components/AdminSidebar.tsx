@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,12 +9,14 @@ import {
     CalendarDays, 
     Mic2,
     Users, 
+    UserCog,
     Trophy, 
     Settings, 
     LogOut,
     X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
 
 interface AdminSidebarProps {
     isOpen: boolean;
@@ -24,6 +26,21 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const res = await api.get('/auth/me');
+                if (res.data.success) {
+                    setUserRole(res.data.data.role);
+                }
+            } catch (error) {
+                console.error("Failed to fetch user role", error);
+            }
+        };
+        fetchRole();
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -36,9 +53,17 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         { name: 'Events', href: '/dashboard/events', icon: CalendarDays },
         { name: 'Programs', href: '/dashboard/programs', icon: Mic2 },
         { name: 'Students', href: '/dashboard/students', icon: Users },
+        { 
+            name: 'Users', 
+            href: '/dashboard/users', 
+            icon: UserCog,
+            adminOnly: true 
+        },
         { name: 'Scoring', href: '/dashboard/scoring', icon: Trophy },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
+
+    const visibleLinks = links.filter(link => !link.adminOnly || userRole === 'super_admin');
 
     return (
         <>
@@ -73,7 +98,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 </div>
 
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                    {links.map((link) => {
+                    {visibleLinks.map((link) => {
                         const Icon = link.icon;
                         const isActive = pathname === link.href;
                         return (
