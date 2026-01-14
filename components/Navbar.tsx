@@ -21,8 +21,8 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const baseMenuItems = [
-    { name: 'Events', href: '#events' },
-    { name: 'Schedule', href: '#schedule' },
+    { name: 'Events', href: '/#events' },
+    { name: 'Schedule', href: '/schedule' },
     { name: 'Leaderboard', href: '/leaderboard' },
   ];
 
