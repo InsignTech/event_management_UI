@@ -9,6 +9,7 @@ interface CollegeStanding {
     name: string;
     logo?: string;
     points: number;
+    rank: number;
 }
 
 export default function LeaderboardPage() {
@@ -71,7 +72,7 @@ export default function LeaderboardPage() {
                                                 <Trophy className="h-10 w-10 text-slate-300" />
                                             )}
                                         </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-slate-300 text-slate-800 w-8 h-8 rounded-full flex items-center justify-center font-black">2</div>
+                                        <div className="absolute -bottom-2 -right-2 bg-slate-300 text-slate-800 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[1].rank}</div>
                                     </div>
                                     <h3 className="text-xl font-black text-center mb-1">{topThree[1].name}</h3>
                                     <p className="text-primary font-black text-2xl">{topThree[1].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
@@ -92,7 +93,7 @@ export default function LeaderboardPage() {
                                                 <Trophy className="h-12 w-12 text-yellow-500" />
                                             )}
                                         </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-yellow-950 w-10 h-10 rounded-full flex items-center justify-center font-black text-lg">1</div>
+                                        <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-yellow-950 w-10 h-10 rounded-full flex items-center justify-center font-black text-lg">{topThree[0].rank}</div>
                                     </div>
                                     <h3 className="text-2xl font-black text-center mb-1">{topThree[0].name}</h3>
                                     <p className="text-primary font-black text-3xl">{topThree[0].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
@@ -110,7 +111,7 @@ export default function LeaderboardPage() {
                                                 <Trophy className="h-10 w-10 text-amber-700" />
                                             )}
                                         </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-amber-700 text-amber-100 w-8 h-8 rounded-full flex items-center justify-center font-black">3</div>
+                                        <div className="absolute -bottom-2 -right-2 bg-amber-700 text-amber-100 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[2].rank}</div>
                                     </div>
                                     <h3 className="text-xl font-black text-center mb-1">{topThree[2].name}</h3>
                                     <p className="text-primary font-black text-2xl">{topThree[2].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
@@ -123,7 +124,7 @@ export default function LeaderboardPage() {
                             {others.map((college, index) => (
                                 <div key={college.name} className="flex items-center justify-between p-6 bg-card border border-border/50 rounded-2xl hover:bg-muted/50 transition-colors">
                                     <div className="flex items-center gap-6">
-                                        <span className="text-2xl font-black opacity-20 w-8">{index + 4}</span>
+                                        <span className="text-2xl font-black opacity-20 w-8">{college.rank}</span>
                                         <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center overflow-hidden p-2">
                                             {college.logo ? (
                                                 <Image src={college.logo} alt={college.name} width={40} height={40} className="object-contain" />
