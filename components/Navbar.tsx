@@ -21,7 +21,7 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const baseMenuItems = [
-    { name: 'Events', href: '/#events' },
+    { name: 'Results', href: '/results' },
     { name: 'Schedule', href: '/schedule' },
     { name: 'Leaderboard', href: '/leaderboard' },
   ];
@@ -29,7 +29,7 @@ export default function Navbar() {
   // Logic to show/hide Dashboard/Home in menu based on where we are
   const menuItems = isLoggedIn 
     ? [...baseMenuItems, isDashboard ? { name: 'Home', href: '/' } : { name: 'Dashboard', href: '/dashboard' }]
-    : [...baseMenuItems, { name: 'Login', href: '/login' }];
+    : baseMenuItems;
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 glass border-b border-border/50">
@@ -59,18 +59,16 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              {!isLoggedIn ? (
-                <Link href="/register" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
-                  Register Now
-                </Link>
-              ) : isDashboard ? (
-                <Link href="/" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
-                  Go to Home
-                </Link>
-              ) : (
-                <Link href="/dashboard" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
-                  Go to Dashboard
-                </Link>
+              {isLoggedIn && (
+                isDashboard ? (
+                  <Link href="/" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
+                    Go to Home
+                  </Link>
+                ) : (
+                  <Link href="/dashboard" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
+                    Go to Dashboard
+                  </Link>
+                )
               )}
             </div>
           </div>
@@ -100,30 +98,24 @@ export default function Navbar() {
                 {item.name}
               </Link>
             ))}
-            {!isLoggedIn ? (
-              <Link 
-                href="/register" 
-                onClick={() => setIsOpen(false)}
-                className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
-              >
-                Register Now
-              </Link>
-            ) : isDashboard ? (
-              <Link 
-                href="/" 
-                onClick={() => setIsOpen(false)}
-                className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
-              >
-                Go to Home
-              </Link>
-            ) : (
-              <Link 
-                href="/dashboard" 
-                onClick={() => setIsOpen(false)}
-                className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
-              >
-                Go to Dashboard
-              </Link>
+            {isLoggedIn && (
+              isDashboard ? (
+                <Link 
+                  href="/" 
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
+                >
+                  Go to Home
+                </Link>
+              ) : (
+                <Link 
+                  href="/dashboard" 
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
+                >
+                  Go to Dashboard
+                </Link>
+              )
             )}
           </div>
         </div>
