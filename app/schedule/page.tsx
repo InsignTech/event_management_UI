@@ -80,40 +80,47 @@ export default function SchedulePage() {
                                     <div className="h-px bg-primary/20 flex-1"></div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-4 relative before:absolute before:left-[31px] md:before:left-[39px] before:top-2 before:bottom-2 before:w-px before:bg-border/60">
                                     {programs.map((program: Program) => (
-                                        <div key={program._id} className="bg-card border border-border/50 rounded-2xl p-6 hover:border-primary/50 transition-all group hover:shadow-2xl hover:shadow-primary/5">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="p-3 bg-primary/10 rounded-xl text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                                    {program.category === 'on_stage' ? <Mic2 className="h-6 w-6" /> : <Tv className="h-6 w-6" />}
+                                        <div key={program._id} className="relative pl-16 md:pl-24 group">
+                                            {/* Timeline Dot */}
+                                            <div className="absolute left-[24px] md:left-[32px] top-4 w-4 h-4 rounded-full border-2 border-background bg-primary group-hover:scale-125 transition-transform z-10 shadow-[0_0_0_4px_rgba(var(--primary),0.1)]"></div>
+                                            
+                                            <div className="bg-card border border-border/50 rounded-2xl p-4 md:p-6 hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3 mb-2 text-xs font-black uppercase tracking-wider text-muted-foreground/60">
+                                                        <Clock className="h-3 w-3 text-primary" />
+                                                        <span>
+                                                            {new Date(program.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            <span className="mx-2 opacity-30">|</span>
+                                                            {program.duration} mins
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <h3 className="text-lg md:text-xl font-bold mb-2 truncate group-hover:text-primary transition-colors">{program.name}</h3>
+                                                    
+                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                        <div className="flex items-center gap-2">
+                                                            <MapPin className="h-3 w-3 text-primary" />
+                                                            <span className="truncate max-w-[150px] md:max-w-none">{program.venue}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase border border-primary/20 bg-primary/5 text-primary">
-                                                        {program.event.name}
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                                        program.category === 'on_stage' 
+                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                                                            : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                                                    }`}>
+                                                        {program.category.replace('_', '-')}
                                                     </span>
                                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
                                                         program.type === 'single' 
-                                                            ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
+                                                            ? 'bg-muted text-muted-foreground border-border' 
                                                             : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
                                                     }`}>
                                                         {program.type}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <h3 className="text-xl font-bold mb-4 line-clamp-1">{program.name}</h3>
-                                            
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                                    <MapPin className="h-4 w-4 text-primary" />
-                                                    <span>{program.venue}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                                    <Clock className="h-4 w-4 text-primary" />
-                                                    <span>
-                                                        {new Date(program.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        <span className="mx-2 opacity-30">|</span>
-                                                        {program.duration} mins
                                                     </span>
                                                 </div>
                                             </div>
