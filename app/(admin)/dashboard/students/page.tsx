@@ -194,9 +194,8 @@ export default function StudentsPage() {
                                 placeholder="Select College"
                             />
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Course</label>
+                                <label className="text-xs text-muted-foreground">Course (Optional)</label>
                                 <input 
-                                    required
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     placeholder="e.g. BCA, B.Sc Computer Science"
                                     value={newStudent.course}
@@ -281,9 +280,8 @@ export default function StudentsPage() {
                                 placeholder="Select College"
                             />
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Course</label>
+                                <label className="text-xs text-muted-foreground">Course (Optional)</label>
                                 <input 
-                                    required
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={currentStudent.course}
                                     onChange={e => setCurrentStudent({...currentStudent, course: e.target.value})}
