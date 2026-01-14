@@ -20,8 +20,16 @@ interface Student {
 
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCollege, setSelectedCollege] = useState('');
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 20,
+        pages: 1
+    });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,9 +45,20 @@ export default function StudentsPage() {
     });
 
     useEffect(() => {
-        fetchStudents();
         fetchColleges();
     }, []);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchStudents(1); // Reset to page 1 on search or filter change
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, selectedCollege]);
+
+    useEffect(() => {
+        fetchStudents(page);
+    }, [page]);
 
     const fetchColleges = async () => {
         try {
@@ -52,11 +71,20 @@ export default function StudentsPage() {
         }
     };
 
-    const fetchStudents = async () => {
+    const fetchStudents = async (targetPage = 1) => {
+        setLoading(true);
         try {
-            const res = await api.get('/students');
+            const res = await api.get('/students', {
+                params: {
+                    college: selectedCollege || undefined,
+                    search: searchTerm || undefined,
+                    page: targetPage,
+                    limit: 20
+                }
+            });
             if (res.data.success) {
                 setStudents(res.data.data);
+                setPagination(res.data.pagination);
             }
         } catch (error) {
             showError(error);
@@ -119,12 +147,8 @@ export default function StudentsPage() {
         }
     };
 
-    const filteredStudents = students.filter(s => 
-        s.universityRegNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.course.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.college?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Backend-driven results
+    const filteredStudents = students;
 
     return (
         <div className="space-y-6">
@@ -313,15 +337,34 @@ export default function StudentsPage() {
             )}
 
 
-            <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg max-w-md">
-                <Search className="h-4 w-4 text-muted-foreground mr-2" />
-                <input 
-                    type="text" 
-                    placeholder="Search by Reg No, Name, Course or College..." 
-                    className="bg-transparent border-none outline-none text-sm w-full"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="w-full">
+                    <SearchableSelect 
+                        label="Filter by College"
+                        options={[{_id: '', name: 'All Colleges'}, ...colleges]}
+                        value={selectedCollege}
+                        onChange={val => {
+                            setSelectedCollege(val);
+                            setPage(1);
+                        }}
+                        placeholder="Select College"
+                    />
+                </div>
+                <div className="flex items-end">
+                    <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg w-full h-[42px]">
+                        <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                        <input 
+                            type="text" 
+                            placeholder="Search by Reg No, Name, Course..." 
+                            className="bg-transparent border-none outline-none text-sm w-full"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setPage(1);
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -376,6 +419,54 @@ export default function StudentsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+                <div className="flex items-center justify-between px-2">
+                    <p className="text-xs text-muted-foreground">
+                        Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} students
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            disabled={pagination.page === 1}
+                            onClick={() => setPage(p => p - 1)}
+                            className="px-3 py-1.5 text-xs font-bold border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                                let pageNum;
+                                if (pagination.pages <= 5) pageNum = i + 1;
+                                else if (pagination.page <= 3) pageNum = i + 1;
+                                else if (pagination.page >= pagination.pages - 2) pageNum = pagination.pages - 4 + i;
+                                else pageNum = pagination.page - 2 + i;
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setPage(pageNum)}
+                                        className={`w-8 h-8 text-xs font-bold rounded-lg transition-colors ${
+                                            pagination.page === pageNum 
+                                            ? 'bg-primary text-primary-foreground' 
+                                            : 'border border-border hover:bg-muted'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button
+                            disabled={pagination.page === pagination.pages}
+                            onClick={() => setPage(p => p + 1)}
+                            className="px-3 py-1.5 text-xs font-bold border border-border rounded-lg hover:bg-muted disabled:opacity-50 transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
