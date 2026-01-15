@@ -32,8 +32,45 @@ export default function LeaderboardPage() {
         fetchLeaderboard();
     }, []);
 
-    const topThree = standings.slice(0, 3);
-    const others = standings.slice(3);
+    // Logic for Podium vs List
+    // 1. If no points yet, list everyone.
+    // 2. If tie for 1st place (multiple rank 1s), list everyone (no podium).
+    // 3. If unique 1st, show Gold.
+    // 4. If unique 2nd, show Silver.
+    // 5. If unique 3rd, show Bronze.
+    
+    let topThree: (CollegeStanding | null)[] = [null, null, null]; // [Silver, Gold, Bronze]
+
+    const rank1 = standings.filter(s => s.rank === 1);
+    const rank2 = standings.filter(s => s.rank === 2);
+    const rank3 = standings.filter(s => s.rank === 3);
+    
+    // Only show podium if we have scores
+    const showPodium = standings.length > 0 && standings[0].points > 0;
+    
+    let renderedInPodium: string[] = [];
+
+    if (showPodium) {
+        // Gold Logic: Only if unique Rank 1
+        if (rank1.length === 1) {
+            topThree[1] = rank1[0]; // Gold is center (index 1 in map below, but visual order 2)
+            renderedInPodium.push(rank1[0].name);
+
+            // Silver Logic: Only if unique Rank 2
+            if (rank2.length === 1) {
+                topThree[0] = rank2[0]; // Silver is left (visual order 1)
+                renderedInPodium.push(rank2[0].name);
+
+                // Bronze Logic: Only if unique Rank 3
+                if (rank3.length === 1) {
+                    topThree[2] = rank3[0]; // Bronze is right (visual order 3)
+                    renderedInPodium.push(rank3[0].name);
+                }
+            }
+        }
+    }
+
+    const others = standings.filter(s => !renderedInPodium.includes(s.name));
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -59,65 +96,79 @@ export default function LeaderboardPage() {
                     </div>
                 ) : (
                     <div className="space-y-12">
-                        {/* Top 3 Podium */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-12 border-b border-border/50">
-                            {/* 2nd Place */}
-                            {topThree[1] && (
+                        {/* Top 3 Podium - Only render if we have at least one item to show */}
+                         {renderedInPodium.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pb-12 border-b border-border/50">
+                                {/* 2nd Place (Silver) - Index 0 */}
                                 <div className="order-2 md:order-1 flex flex-col items-center">
-                                    <div className="mb-4 relative">
-                                        <div className="w-24 h-24 rounded-full border-4 border-slate-300 bg-card overflow-hidden flex items-center justify-center p-4">
-                                            {topThree[1].logo ? (
-                                                <Image src={topThree[1].logo} alt={topThree[1].name} width={80} height={80} className="object-contain" />
-                                            ) : (
-                                                <Trophy className="h-10 w-10 text-slate-300" />
-                                            )}
-                                        </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-slate-300 text-slate-800 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[1].rank}</div>
-                                    </div>
-                                    <h3 className="text-xl font-black text-center mb-1">{topThree[1].name}</h3>
-                                    <p className="text-primary font-black text-2xl">{topThree[1].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                    {topThree[0] ? (
+                                        <>
+                                            <div className="mb-4 relative">
+                                                <div className="w-24 h-24 rounded-full border-4 border-slate-300 bg-card overflow-hidden flex items-center justify-center p-4">
+                                                    {topThree[0].logo ? (
+                                                        <Image src={topThree[0].logo} alt={topThree[0].name} width={80} height={80} className="object-contain" />
+                                                    ) : (
+                                                        <Trophy className="h-10 w-10 text-slate-300" />
+                                                    )}
+                                                </div>
+                                                <div className="absolute -bottom-2 -right-2 bg-slate-300 text-slate-800 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[0].rank}</div>
+                                            </div>
+                                            <h3 className="text-xl font-black text-center mb-1">{topThree[0].name}</h3>
+                                            <p className="text-primary font-black text-2xl">{topThree[0].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                        </>
+                                    ) : (
+                                        // Empty placeholder to maintain grid layout if Gold exists but Silver is list
+                                        <div className="h-24 hidden md:block" />
+                                    )}
                                 </div>
-                            )}
 
-                            {/* 1st Place */}
-                            {topThree[0] && (
+                                {/* 1st Place (Gold) - Index 1 */}
                                 <div className="order-1 md:order-2 flex flex-col items-center scale-110 mb-8 md:mb-0">
-                                    <div className="mb-4 relative">
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 animate-bounce">
-                                            <Trophy className="h-12 w-12 text-yellow-500" />
-                                        </div>
-                                        <div className="w-32 h-32 rounded-full border-4 border-yellow-500 bg-card overflow-hidden flex items-center justify-center p-6 shadow-2xl shadow-yellow-500/20">
-                                            {topThree[0].logo ? (
-                                                <Image src={topThree[0].logo} alt={topThree[0].name} width={100} height={100} className="object-contain" />
-                                            ) : (
-                                                <Trophy className="h-12 w-12 text-yellow-500" />
-                                            )}
-                                        </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-yellow-950 w-10 h-10 rounded-full flex items-center justify-center font-black text-lg">{topThree[0].rank}</div>
-                                    </div>
-                                    <h3 className="text-2xl font-black text-center mb-1">{topThree[0].name}</h3>
-                                    <p className="text-primary font-black text-3xl">{topThree[0].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                   {topThree[1] && (
+                                        <>
+                                            <div className="mb-4 relative">
+                                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 animate-bounce">
+                                                    <Trophy className="h-12 w-12 text-yellow-500" />
+                                                </div>
+                                                <div className="w-32 h-32 rounded-full border-4 border-yellow-500 bg-card overflow-hidden flex items-center justify-center p-6 shadow-2xl shadow-yellow-500/20">
+                                                    {topThree[1].logo ? (
+                                                        <Image src={topThree[1].logo} alt={topThree[1].name} width={100} height={100} className="object-contain" />
+                                                    ) : (
+                                                        <Trophy className="h-12 w-12 text-yellow-500" />
+                                                    )}
+                                                </div>
+                                                <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-yellow-950 w-10 h-10 rounded-full flex items-center justify-center font-black text-lg">{topThree[1].rank}</div>
+                                            </div>
+                                            <h3 className="text-2xl font-black text-center mb-1">{topThree[1].name}</h3>
+                                            <p className="text-primary font-black text-3xl">{topThree[1].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                        </>
+                                   )}
                                 </div>
-                            )}
 
-                            {/* 3rd Place */}
-                            {topThree[2] && (
+                                {/* 3rd Place (Bronze) - Index 2 */}
                                 <div className="order-3 md:order-3 flex flex-col items-center">
-                                    <div className="mb-4 relative">
-                                        <div className="w-24 h-24 rounded-full border-4 border-amber-700 bg-card overflow-hidden flex items-center justify-center p-4">
-                                            {topThree[2].logo ? (
-                                                <Image src={topThree[2].logo} alt={topThree[2].name} width={80} height={80} className="object-contain" />
-                                            ) : (
-                                                <Trophy className="h-10 w-10 text-amber-700" />
-                                            )}
-                                        </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-amber-700 text-amber-100 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[2].rank}</div>
-                                    </div>
-                                    <h3 className="text-xl font-black text-center mb-1">{topThree[2].name}</h3>
-                                    <p className="text-primary font-black text-2xl">{topThree[2].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                    {topThree[2] ? (
+                                        <>
+                                            <div className="mb-4 relative">
+                                                <div className="w-24 h-24 rounded-full border-4 border-amber-700 bg-card overflow-hidden flex items-center justify-center p-4">
+                                                    {topThree[2].logo ? (
+                                                        <Image src={topThree[2].logo} alt={topThree[2].name} width={80} height={80} className="object-contain" />
+                                                    ) : (
+                                                        <Trophy className="h-10 w-10 text-amber-700" />
+                                                    )}
+                                                </div>
+                                                <div className="absolute -bottom-2 -right-2 bg-amber-700 text-amber-100 w-8 h-8 rounded-full flex items-center justify-center font-black">{topThree[2].rank}</div>
+                                            </div>
+                                            <h3 className="text-xl font-black text-center mb-1">{topThree[2].name}</h3>
+                                            <p className="text-primary font-black text-2xl">{topThree[2].points} <span className="text-xs uppercase opacity-60">PTS</span></p>
+                                        </>
+                                    ) : (
+                                         // Empty placeholder
+                                        <div className="h-24 hidden md:block" />
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                         )}
 
                         {/* List View for Others */}
                         <div className="space-y-4">

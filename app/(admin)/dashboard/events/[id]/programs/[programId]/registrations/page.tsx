@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -30,6 +30,7 @@ export default function ProgramRegistrationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [pagination, setPagination] = useState<{total: number, page: number, limit: number, pages: number} | null>(null);
     const [page, setPage] = useState(1);
+    const [isPublished, setIsPublished] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -104,6 +105,7 @@ export default function ProgramRegistrationsPage() {
             if (res.data.success) {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
+                setIsPublished(res.data.isResultPublished || false);
             }
         } catch (error) {
             showError(error);
@@ -192,10 +194,12 @@ export default function ProgramRegistrationsPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-3xl font-bold">Registrations</h1>
                 <button 
+                    disabled={isPublished}
+                    title={isPublished ? "Registration Closed (Published)" : "New Registration"}
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Plus className="h-4 w-4" />
+                    {isPublished ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                     New Registration
                 </button>
             </div>
@@ -431,11 +435,20 @@ export default function ProgramRegistrationsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-2">
                                             <button 
-                                                title="Submit Score"
-                                                onClick={() => { setSelectedRegistration(reg); setScoreValue(reg.pointsObtained?.toString() || ''); setIsScoreModalOpen(true); }}
-                                                className="p-2 hover:bg-yellow-500/10 rounded-lg text-muted-foreground hover:text-yellow-500 transition-all border border-transparent hover:border-yellow-500/20"
+                                                title={isPublished ? "Score Locked (Published)" : "Submit Score"}
+                                                onClick={() => { 
+                                                    if (isPublished) return;
+                                                    setSelectedRegistration(reg); 
+                                                    setScoreValue(reg.pointsObtained?.toString() || ''); 
+                                                    setIsScoreModalOpen(true); 
+                                                }}
+                                                className={`p-2 rounded-lg transition-all border border-transparent ${
+                                                    isPublished 
+                                                        ? 'text-muted-foreground/30 cursor-not-allowed' 
+                                                        : 'hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-500 hover:border-yellow-500/20'
+                                                }`}
                                             >
-                                                <Trophy className="h-4 w-4" />
+                                                {isPublished ? <Lock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
                                             </button>
                                             <button 
                                                 title="Delete Registration"

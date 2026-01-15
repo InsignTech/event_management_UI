@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState, useMemo } from 'react';
-import { Trophy, Search, Star, UserCheck, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trophy, Search, Star, UserCheck, Filter, ChevronLeft, ChevronRight, Share, CheckCircle, Lock } from 'lucide-react';
 import api from '@/lib/api';
+import { showSuccess, showError } from '@/lib/toast';
 
 interface Registration {
     _id: string;
@@ -15,6 +16,7 @@ interface Registration {
 interface Program {
     _id: string;
     name: string;
+    isResultPublished?: boolean;
 }
 
 interface PaginationMeta {
@@ -34,6 +36,11 @@ export default function ScoringPage() {
     const [pagination, setPagination] = useState<PaginationMeta | null>(null);
     const [page, setPage] = useState(1);
     const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    const currentProgram = useMemo(() => 
+        programs.find(p => p._id === selectedProgram), 
+        [programs, selectedProgram]
+    );
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -84,6 +91,22 @@ export default function ScoringPage() {
         }
     };
 
+    const handlePublish = async () => {
+        if (selectedProgram === 'none') return;
+        if (!confirm('Are you sure you want to publish the results? This will finalize the scores and make them public. This action cannot be undone.')) return;
+
+        try {
+            const res = await api.post(`/programs/${selectedProgram}/publish`);
+            if (res.data.success) {
+                showSuccess('Results published successfully');
+                // Refresh programs to update published status
+                fetchPrograms();
+            }
+        } catch (error) {
+            showError(error);
+        }
+    };
+
     const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedProgram(e.target.value);
         setPage(1);
@@ -95,9 +118,111 @@ export default function ScoringPage() {
         setPage(1); // Reset to page 1 on search
     };
 
+    // Score Editing Logic
+    const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+    const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
+    const [scoreValue, setScoreValue] = useState<string>('');
+    const [isSubmittingScore, setIsSubmittingScore] = useState(false);
+
+    const handleScoreSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRegistration || !scoreValue || !selectedProgram) return;
+        
+        setIsSubmittingScore(true);
+        try {
+            const res = await api.post('/scores/submit', {
+                programId: selectedProgram,
+                registrationId: selectedRegistration._id,
+                criteria: { "Mark": parseFloat(scoreValue) }
+            });
+            
+            if (res.data.success) {
+                showSuccess('Score submitted successfully');
+                setIsScoreModalOpen(false);
+                setScoreValue('');
+                setSelectedRegistration(null);
+                fetchRegistrations(page, debouncedSearch); // Refresh data
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setIsSubmittingScore(false);
+        }
+    };
+
+    const isPublished = currentProgram?.isResultPublished || false;
+
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Scoring & Results</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Scoring & Results</h1>
+                {selectedProgram !== 'none' && (
+                    <div className="flex items-center gap-2">
+                         {isPublished ? (
+                            <span className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-500 rounded-full text-sm font-semibold border border-green-500/20">
+                                <CheckCircle className="h-4 w-4" />
+                                Results Published
+                            </span>
+                        ) : (
+                            <button 
+                                onClick={handlePublish}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+                            >
+                                <Share className="h-4 w-4" />
+                                Publish Results
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+            
+            {/* Score Modal */}
+            {isScoreModalOpen && selectedRegistration && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground transition-all backdrop-blur-sm">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                             <Trophy className="h-5 w-5 text-yellow-500" />
+                             Edit Score
+                        </h2>
+                        <p className="text-xs text-muted-foreground mb-6">
+                            Update marks for chest number <span className="font-bold text-primary">{selectedRegistration.chestNumber}</span>
+                        </p>
+                        
+                        <form onSubmit={handleScoreSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-muted-foreground">Marks / Points</label>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    autoFocus
+                                    required
+                                    className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-lg font-bold outline-none focus:border-primary text-center"
+                                    placeholder="0.00"
+                                    value={scoreValue}
+                                    onChange={e => setScoreValue(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-8">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsScoreModalOpen(false)}
+                                    className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isSubmittingScore}
+                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isSubmittingScore ? 'Updating...' : 'Update Score'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
             
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                 <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg w-full max-w-md">
@@ -123,7 +248,7 @@ export default function ScoringPage() {
                         <option value="none" className="bg-card text-foreground">Select a Program</option>
                         {programs.map(prog => (
                             <option key={prog._id} value={prog._id} className="bg-card text-foreground">
-                                {prog.name}
+                                {prog.name} {prog.isResultPublished ? '(Published)' : ''}
                             </option>
                         ))}
                     </select>
@@ -179,7 +304,23 @@ export default function ScoringPage() {
                                         </td>
                                         <td className="px-6 py-4 font-bold">{reg.pointsObtained || 0}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-primary hover:underline text-xs font-bold">Edit Score</button>
+                                            {isPublished ? (
+                                                 <button disabled className="text-muted-foreground/50 cursor-not-allowed flex items-center gap-1 text-xs font-bold ml-auto">
+                                                    <Lock className="h-3 w-3" />
+                                                    Locked
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedRegistration(reg);
+                                                        setScoreValue(reg.pointsObtained?.toString() || '');
+                                                        setIsScoreModalOpen(true);
+                                                    }}
+                                                    className="text-primary hover:underline text-xs font-bold"
+                                                >
+                                                    Edit Score
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
