@@ -22,7 +22,7 @@ export default function Navbar() {
 
   const baseMenuItems = [
     { name: 'Results', href: '/results' },
-    { name: 'Schedule', href: '/schedule' },
+    { name: 'Schedule', href: '/#schedule' },
     { name: 'Leaderboard', href: '/leaderboard' },
   ];
 
