@@ -1,0 +1,20 @@
+{
+  "/(admin)/dashboard/colleges/page": "/dashboard/colleges",
+  "/(admin)/dashboard/events/[id]/programs/[programId]/registrations/page": "/dashboard/events/[id]/programs/[programId]/registrations",
+  "/(admin)/dashboard/events/[id]/programs/page": "/dashboard/events/[id]/programs",
+  "/(admin)/dashboard/events/page": "/dashboard/events",
+  "/(admin)/dashboard/page": "/dashboard",
+  "/(admin)/dashboard/programs/page": "/dashboard/programs",
+  "/(admin)/dashboard/scoring/page": "/dashboard/scoring",
+  "/(admin)/dashboard/settings/page": "/dashboard/settings",
+  "/(admin)/dashboard/students/page": "/dashboard/students",
+  "/(admin)/dashboard/users/page": "/dashboard/users",
+  "/(public)/login/page": "/login",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/leaderboard/page": "/leaderboard",
+  "/page": "/",
+  "/results/page": "/results",
+  "/schedule/page": "/schedule"
+}
