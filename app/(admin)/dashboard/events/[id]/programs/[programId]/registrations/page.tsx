@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight, Lock, CheckCircle, XCircle, Ban, AlertCircle, Edit } from 'lucide-react';
+import { Plus, Search, Trash2, UserCheck, Users, Trophy, ChevronLeft, ChevronRight, Lock, CheckCircle, XCircle, Ban, AlertCircle, Edit } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -21,7 +21,6 @@ interface Registration {
     participants: Student[];
     status: 'open' | 'confirmed' | 'participated' | 'absent' | 'cancelled';
     cancellationReason?: string;
-    pointsObtained: number;
 }
 
 export default function ProgramRegistrationsPage() {
@@ -36,12 +35,9 @@ export default function ProgramRegistrationsPage() {
     const [programDetails, setProgramDetails] = useState<{name: string} | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
-    const [scoreValue, setScoreValue] = useState<string>('');
     const [cancellationReason, setCancellationReason] = useState('');
-    const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
     const [colleges, setColleges] = useState<{_id: string, name: string}[]>([]);
     const [selectedCollege, setSelectedCollege] = useState('');
@@ -202,31 +198,7 @@ export default function ProgramRegistrationsPage() {
         }
     };
 
-    const handleScoreSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedRegistration || !scoreValue) return;
-        
-        setIsSubmittingScore(true);
-        try {
-            const res = await api.post('/scores/submit', {
-                programId,
-                registrationId: selectedRegistration._id,
-                criteria: { "Mark": parseFloat(scoreValue) }
-            });
-            
-            if (res.data.success) {
-                showSuccess('Score submitted successfully');
-                setIsScoreModalOpen(false);
-                setScoreValue('');
-                setSelectedRegistration(null);
-                fetchRegistrations();
-            }
-        } catch (error) {
-            showError(error);
-        } finally {
-            setIsSubmittingScore(false);
-        }
-    };
+
 
     const filteredRegistrations = registrations.filter(r => 
         r.chestNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -381,53 +353,7 @@ export default function ProgramRegistrationsPage() {
                 </div>
             )}
 
-            {/* Score Modal */}
-            {isScoreModalOpen && selectedRegistration && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground">
-                    <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl">
-                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
-                             <Trophy className="h-5 w-5 text-yellow-500" />
-                             Submit Score
-                        </h2>
-                        <p className="text-xs text-muted-foreground mb-6">
-                            Enter marks for chest number <span className="font-bold text-primary">{selectedRegistration.chestNumber}</span>
-                        </p>
-                        
-                        <form onSubmit={handleScoreSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">Marks / Points</label>
-                                <input 
-                                    type="number"
-                                    step="0.01"
-                                    autoFocus
-                                    required
-                                    className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-lg font-bold outline-none focus:border-primary text-center"
-                                    placeholder="0.00"
-                                    value={scoreValue}
-                                    onChange={e => setScoreValue(e.target.value)}
-                                />
-                            </div>
 
-                            <div className="flex gap-3 mt-8">
-                                <button 
-                                    type="button"
-                                    onClick={() => setIsScoreModalOpen(false)}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit"
-                                    disabled={isSubmittingScore}
-                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {isSubmittingScore ? 'Submitting...' : 'Save Score'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
 
             {/* Cancel Modal */}
             {isCancelModalOpen && selectedRegistration && (
@@ -494,7 +420,6 @@ export default function ProgramRegistrationsPage() {
                                 <th className="px-6 py-4">Chest Number</th>
                                 <th className="px-6 py-4">Participants</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Score</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -559,16 +484,7 @@ export default function ProgramRegistrationsPage() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`p-1.5 rounded-lg ${reg.pointsObtained > 0 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-muted text-muted-foreground'}`}>
-                                                    <Star className={`h-4 w-4 ${reg.pointsObtained > 0 ? 'fill-yellow-500' : ''}`} />
-                                                </div>
-                                                <span className={`text-lg font-black ${reg.pointsObtained > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                                    {reg.pointsObtained || '0.00'}
-                                                </span>
-                                            </div>
-                                        </td>
+
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 {reg.status === 'open' && (
@@ -600,24 +516,7 @@ export default function ProgramRegistrationsPage() {
                                                     </button>
                                                 )}
 
-                                                <div className="h-4 w-px bg-border mx-1"></div>
 
-                                                <button 
-                                                    title={isPublished ? "Score Locked (Published)" : "Submit Score"}
-                                                    onClick={() => { 
-                                                        if (isPublished) return;
-                                                        setSelectedRegistration(reg); 
-                                                        setScoreValue(reg.pointsObtained?.toString() || ''); 
-                                                        setIsScoreModalOpen(true); 
-                                                    }}
-                                                    className={`p-2 rounded-lg transition-all border border-transparent ${
-                                                        isPublished 
-                                                            ? 'text-muted-foreground/30 cursor-not-allowed' 
-                                                            : 'hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-500 hover:border-yellow-500/20'
-                                                    }`}
-                                                >
-                                                    {isPublished ? <Lock className="h-4 w-4" /> : <Star className="h-4 w-4" />}
-                                                </button>
                                                 <button 
                                                     title="Edit Registration"
                                                     onClick={() => {

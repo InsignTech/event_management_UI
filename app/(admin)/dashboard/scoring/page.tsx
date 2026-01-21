@@ -1,8 +1,10 @@
 "use client";
 import React, { useEffect, useState, useMemo } from 'react';
-import { Trophy, Search, Star, UserCheck, Filter, ChevronLeft, ChevronRight, Share, CheckCircle, Lock } from 'lucide-react';
+import { Trophy, Search, Star, UserCheck, Filter, ChevronLeft, ChevronRight, Share, CheckCircle, Lock, PlusCircle, Edit3 } from 'lucide-react';
 import api from '@/lib/api';
 import { showSuccess, showError } from '@/lib/toast';
+import SearchableSelect from '@/components/SearchableSelect';
+import { cn } from '@/lib/utils';
 
 interface Registration {
     _id: string;
@@ -182,7 +184,7 @@ export default function ScoringPage() {
                     <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
                         <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
                              <Trophy className="h-5 w-5 text-yellow-500" />
-                             Edit Score
+                             {selectedRegistration.pointsObtained ? 'Edit Score' : 'Add Score'}
                         </h2>
                         <p className="text-xs text-muted-foreground mb-6">
                             Update marks for chest number <span className="font-bold text-primary">{selectedRegistration.chestNumber}</span>
@@ -237,21 +239,18 @@ export default function ScoringPage() {
                     />
                 </div>
 
-                <div className="flex items-center px-3 py-2 bg-card border border-border rounded-lg w-full md:w-64">
-                    <Filter className="h-4 w-4 text-muted-foreground mr-2" />
-                    <select 
-                        className="bg-transparent border-none outline-none text-sm w-full cursor-pointer text-foreground appearance-none focus:ring-0"
+                <div className="w-full md:w-80">
+                    <SearchableSelect 
+                        options={programs}
                         value={selectedProgram}
-                        onChange={handleProgramChange}
+                        onChange={(val) => {
+                            setSelectedProgram(val);
+                            setPage(1);
+                            setSearchTerm('');
+                        }}
+                        placeholder="Search & Select Program..."
                         disabled={progLoading}
-                    >
-                        <option value="none" className="bg-card text-foreground">Select a Program</option>
-                        {programs.map(prog => (
-                            <option key={prog._id} value={prog._id} className="bg-card text-foreground">
-                                {prog.name} {prog.isResultPublished ? '(Published)' : ''}
-                            </option>
-                        ))}
-                    </select>
+                    />
                 </div>
             </div>
 
@@ -305,10 +304,10 @@ export default function ScoringPage() {
                                         <td className="px-6 py-4 font-bold">{reg.pointsObtained || 0}</td>
                                         <td className="px-6 py-4 text-right">
                                             {isPublished ? (
-                                                 <button disabled className="text-muted-foreground/50 cursor-not-allowed flex items-center gap-1 text-xs font-bold ml-auto">
+                                                 <span className="text-muted-foreground/50 flex items-center gap-1 text-xs font-bold justify-end">
                                                     <Lock className="h-3 w-3" />
                                                     Locked
-                                                </button>
+                                                </span>
                                             ) : (
                                                 <button 
                                                     onClick={() => {
@@ -316,9 +315,24 @@ export default function ScoringPage() {
                                                         setScoreValue(reg.pointsObtained?.toString() || '');
                                                         setIsScoreModalOpen(true);
                                                     }}
-                                                    className="text-primary hover:underline text-xs font-bold"
+                                                    className={cn(
+                                                        "flex items-center gap-1 text-xs font-bold ml-auto transition-colors",
+                                                        reg.pointsObtained 
+                                                            ? "text-primary hover:text-primary/80" 
+                                                            : "text-green-500 hover:text-green-400"
+                                                    )}
                                                 >
-                                                    Edit Score
+                                                    {reg.pointsObtained ? (
+                                                        <>
+                                                            <Edit3 className="h-3 w-3" />
+                                                            Edit Score
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <PlusCircle className="h-3 w-3" />
+                                                            Add Score
+                                                        </>
+                                                    )}
                                                 </button>
                                             )}
                                         </td>
