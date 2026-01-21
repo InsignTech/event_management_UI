@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(admin)/layout,_N_T_/(admin)/dashboard/layout,_N_T_/(admin)/dashboard/scoring/layout,_N_T_/(admin)/dashboard/scoring/page,_N_T_/dashboard/scoring"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGFkbWluKQ/dashboard/scoring/__PAGE__",
+    "/!KGFkbWluKQ/dashboard/scoring",
+    "/!KGFkbWluKQ/dashboard",
+    "/!KGFkbWluKQ",
+    "/_index",
+    "/_head"
+  ]
+}

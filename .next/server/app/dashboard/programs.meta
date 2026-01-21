@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(admin)/layout,_N_T_/(admin)/dashboard/layout,_N_T_/(admin)/dashboard/programs/layout,_N_T_/(admin)/dashboard/programs/page,_N_T_/dashboard/programs"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGFkbWluKQ/dashboard/programs/__PAGE__",
+    "/!KGFkbWluKQ/dashboard/programs",
+    "/!KGFkbWluKQ/dashboard",
+    "/!KGFkbWluKQ",
+    "/_index",
+    "/_head"
+  ]
+}
