@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { Plus, Search, Trash2, UserCheck, Users, Trophy, Star, ChevronLeft, ChevronRight, Lock, CheckCircle, XCircle, Ban, AlertCircle, Edit } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -10,7 +10,8 @@ import { showError, showSuccess } from '@/lib/toast';
 interface Student {
     _id: string;
     name?: string;
-    universityRegNo: string;
+    registrationCode: string;
+    phone: string;
     college: { _id: string, name: string };
 }
 
@@ -18,7 +19,8 @@ interface Registration {
     _id: string;
     chestNumber: string;
     participants: Student[];
-    status: string;
+    status: 'open' | 'confirmed' | 'participated' | 'absent' | 'cancelled';
+    cancellationReason?: string;
     pointsObtained: number;
 }
 
@@ -31,11 +33,14 @@ export default function ProgramRegistrationsPage() {
     const [pagination, setPagination] = useState<{total: number, page: number, limit: number, pages: number} | null>(null);
     const [page, setPage] = useState(1);
     const [isPublished, setIsPublished] = useState(false);
+    const [programDetails, setProgramDetails] = useState<{name: string} | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
     const [scoreValue, setScoreValue] = useState<string>('');
+    const [cancellationReason, setCancellationReason] = useState('');
     const [isSubmittingScore, setIsSubmittingScore] = useState(false);
 
     const [colleges, setColleges] = useState<{_id: string, name: string}[]>([]);
@@ -106,6 +111,7 @@ export default function ProgramRegistrationsPage() {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
                 setIsPublished(res.data.isResultPublished || false);
+                setProgramDetails(res.data.program || null);
             }
         } catch (error) {
             showError(error);
@@ -114,24 +120,42 @@ export default function ProgramRegistrationsPage() {
         }
     };
 
-    const handleCreate = async () => {
+    const handleCreateOrUpdate = async () => {
         if (selectedStudentIds.length === 0) return;
         try {
-            const res = await api.post('/registrations', { 
-                program: programId, 
-                participants: selectedStudentIds 
-            });
-            if (res.data.success) {
-                showSuccess('Registration successful');
-                setIsModalOpen(false);
-                setSelectedStudentIds([]);
-                setSelectedCollege('');
-                setStudentSearch('');
-                fetchRegistrations();
+            if (selectedRegistration) {
+                // Update
+                const res = await api.put(`/registrations/${selectedRegistration._id}`, {
+                    participants: selectedStudentIds
+                });
+                if (res.data.success) {
+                    showSuccess('Registration updated successfully');
+                    closeModal();
+                    fetchRegistrations();
+                }
+            } else {
+                // Create
+                const res = await api.post('/registrations', { 
+                    program: programId, 
+                    participants: selectedStudentIds 
+                });
+                if (res.data.success) {
+                    showSuccess('Registration successful');
+                    closeModal();
+                    fetchRegistrations();
+                }
             }
         } catch (error: any) {
             showError(error);
         }
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedRegistration(null);
+        setSelectedStudentIds([]);
+        setSelectedCollege('');
+        setStudentSearch('');
     };
 
     const handleDelete = async (id: string) => {
@@ -140,6 +164,37 @@ export default function ProgramRegistrationsPage() {
             const res = await api.delete(`/registrations/${id}`);
             if (res.data.success) {
                 showSuccess('Registration deleted successfully');
+                fetchRegistrations();
+            }
+        } catch (error) {
+            showError(error);
+        }
+    };
+
+    const handleStatusUpdate = async (id: string, status: string) => {
+        try {
+            const res = await api.patch(`/registrations/${id}/status`, { status });
+            if (res.data.success) {
+                showSuccess(`Status updated to ${status}`);
+                fetchRegistrations();
+            }
+        } catch (error) {
+            showError(error);
+        }
+    };
+
+    const handleCancelSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRegistration || !cancellationReason) return;
+        try {
+            const res = await api.post(`/registrations/${selectedRegistration._id}/cancel`, {
+                reason: cancellationReason
+            });
+            if (res.data.success) {
+                showSuccess('Registration cancelled');
+                setIsCancelModalOpen(false);
+                setCancellationReason('');
+                setSelectedRegistration(null);
                 fetchRegistrations();
             }
         } catch (error) {
@@ -176,7 +231,7 @@ export default function ProgramRegistrationsPage() {
     const filteredRegistrations = registrations.filter(r => 
         r.chestNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.participants.some(p => 
-            p.universityRegNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.registrationCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.name?.toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
@@ -192,7 +247,14 @@ export default function ProgramRegistrationsPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-3xl font-bold">Registrations</h1>
+                <div>
+                    <h1 className="text-3xl font-bold">Registrations</h1>
+                    {programDetails && (
+                        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 font-sans">
+                            Program: <span className="text-primary font-bold px-2 py-0.5 bg-primary/10 rounded">{programDetails.name}</span>
+                        </p>
+                    )}
+                </div>
                 <button 
                     disabled={isPublished}
                     title={isPublished ? "Registration Closed (Published)" : "New Registration"}
@@ -208,7 +270,7 @@ export default function ProgramRegistrationsPage() {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground">
                     <div className="bg-card border border-border rounded-xl w-full max-w-md p-6 shadow-2xl flex flex-col max-h-[90vh]">
-                        <h2 className="text-xl font-bold mb-4">Register for Program</h2>
+                        <h2 className="text-xl font-bold mb-4">{selectedRegistration ? 'Edit Registration' : 'Register for Program'}</h2>
                         
                         <div className="mb-4">
                             <label className="text-xs text-muted-foreground block mb-2">Selected Participants</label>
@@ -218,7 +280,7 @@ export default function ProgramRegistrationsPage() {
                                     const student = allStudents.find(s => s._id === id) || registrations.flatMap(r => r.participants).find(p => p._id === id);
                                     return (
                                         <span key={id} className="bg-primary/20 text-primary px-2 py-1 rounded-md text-xs flex items-center gap-1">
-                                            {student?.name || student?.universityRegNo}
+                                            {student?.name || student?.registrationCode}
                                             <button 
                                                 onClick={() => setSelectedStudentIds(selectedStudentIds.filter(sid => sid !== id))}
                                                 className="hover:text-foreground"
@@ -268,7 +330,7 @@ export default function ProgramRegistrationsPage() {
                                         >
                                             <div>
                                                 <p className="font-bold">{student.name || 'Unknown student'}</p>
-                                                <p className="text-[10px] text-muted-foreground truncate">{student.universityRegNo} • {student.college.name}</p>
+                                                <p className="text-[10px] text-muted-foreground truncate">{student.registrationCode} • {student.college.name}</p>
                                             </div>
                                             <Plus className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </button>
@@ -279,22 +341,17 @@ export default function ProgramRegistrationsPage() {
 
                         <div className="flex gap-3 mt-6">
                             <button 
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    setSelectedStudentIds([]);
-                                    setSelectedCollege('');
-                                    setStudentSearch('');
-                                }}
+                                onClick={closeModal}
                                 className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors font-medium"
                             >
                                 Cancel
                             </button>
                             <button 
-                                onClick={handleCreate}
+                                onClick={handleCreateOrUpdate}
                                 disabled={selectedStudentIds.length === 0}
                                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Register
+                                {selectedRegistration ? 'Save Changes' : 'Register'}
                             </button>
                         </div>
                     </div>
@@ -342,6 +399,51 @@ export default function ProgramRegistrationsPage() {
                                     className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSubmittingScore ? 'Submitting...' : 'Save Score'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Modal */}
+            {isCancelModalOpen && selectedRegistration && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2 text-destructive">
+                             <Ban className="h-5 w-5" />
+                             Cancel Registration
+                        </h2>
+                        <p className="text-xs text-muted-foreground mb-6">
+                            Reason for cancellation of <span className="font-bold">{selectedRegistration.chestNumber}</span>
+                        </p>
+                        
+                        <form onSubmit={handleCancelSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-muted-foreground">Reason</label>
+                                <textarea 
+                                    required
+                                    rows={3}
+                                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                                    placeholder="e.g. Student absent, Disqualified..."
+                                    value={cancellationReason}
+                                    onChange={e => setCancellationReason(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsCancelModalOpen(false)}
+                                    className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
+                                >
+                                    Back
+                                </button>
+                                <button 
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg text-sm font-bold hover:bg-destructive/90 transition-colors"
+                                >
+                                    Confirm Cancel
                                 </button>
                             </div>
                         </form>
@@ -403,7 +505,7 @@ export default function ProgramRegistrationsPage() {
                                                             <span className="font-medium text-foreground">{p.name || 'N/A'}</span>
                                                         </div>
                                                         <div className="text-[10px] text-muted-foreground ml-5 font-medium">
-                                                            {p.universityRegNo} • {p.college.name}
+                                                            {p.registrationCode} • {p.college.name}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -415,13 +517,24 @@ export default function ProgramRegistrationsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 capitalize">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border tracking-wider ${
-                                                reg.status === 'completed'
-                                                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                                                    : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                            }`}>
-                                                {reg.status.replace('_', ' ')}
-                                            </span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border tracking-wider uppercase ${
+                                                    reg.status === 'participated'
+                                                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                                                        : reg.status === 'confirmed'
+                                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                                        : reg.status === 'cancelled'
+                                                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                        : 'bg-muted text-muted-foreground border-border'
+                                                }`}>
+                                                    {reg.status.replace('_', ' ')}
+                                                </span>
+                                                {reg.cancellationReason && (
+                                                    <span className="text-[10px] text-destructive italic max-w-[150px] truncate" title={reg.cancellationReason}>
+                                                        {reg.cancellationReason}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
@@ -433,30 +546,75 @@ export default function ProgramRegistrationsPage() {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right space-x-2">
-                                            <button 
-                                                title={isPublished ? "Score Locked (Published)" : "Submit Score"}
-                                                onClick={() => { 
-                                                    if (isPublished) return;
-                                                    setSelectedRegistration(reg); 
-                                                    setScoreValue(reg.pointsObtained?.toString() || ''); 
-                                                    setIsScoreModalOpen(true); 
-                                                }}
-                                                className={`p-2 rounded-lg transition-all border border-transparent ${
-                                                    isPublished 
-                                                        ? 'text-muted-foreground/30 cursor-not-allowed' 
-                                                        : 'hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-500 hover:border-yellow-500/20'
-                                                }`}
-                                            >
-                                                {isPublished ? <Lock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
-                                            </button>
-                                            <button 
-                                                title="Delete Registration"
-                                                onClick={() => handleDelete(reg._id)}
-                                                className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                {reg.status === 'open' && (
+                                                    <button 
+                                                        title="Confirm Registration"
+                                                        onClick={() => handleStatusUpdate(reg._id, 'confirmed')}
+                                                        className="p-2 hover:bg-blue-500/10 rounded-lg text-muted-foreground hover:text-blue-500 transition-all"
+                                                    >
+                                                        <CheckCircle className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {reg.status === 'confirmed' && (
+                                                    <button 
+                                                        title="Mark as Participated"
+                                                        onClick={() => handleStatusUpdate(reg._id, 'participated')}
+                                                        className="p-2 hover:bg-green-500/10 rounded-lg text-muted-foreground hover:text-green-500 transition-all"
+                                                    >
+                                                        <Trophy className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                
+                                                {reg.status !== 'cancelled' && (
+                                                     <button 
+                                                        title="Cancel Registration"
+                                                        onClick={() => { setSelectedRegistration(reg); setIsCancelModalOpen(true); }}
+                                                        className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+                                                    >
+                                                        <Ban className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
+                                                <div className="h-4 w-px bg-border mx-1"></div>
+
+                                                <button 
+                                                    title={isPublished ? "Score Locked (Published)" : "Submit Score"}
+                                                    onClick={() => { 
+                                                        if (isPublished) return;
+                                                        setSelectedRegistration(reg); 
+                                                        setScoreValue(reg.pointsObtained?.toString() || ''); 
+                                                        setIsScoreModalOpen(true); 
+                                                    }}
+                                                    className={`p-2 rounded-lg transition-all border border-transparent ${
+                                                        isPublished 
+                                                            ? 'text-muted-foreground/30 cursor-not-allowed' 
+                                                            : 'hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-500 hover:border-yellow-500/20'
+                                                    }`}
+                                                >
+                                                    {isPublished ? <Lock className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+                                                </button>
+                                                <button 
+                                                    title="Edit Registration"
+                                                    onClick={() => {
+                                                        setSelectedRegistration(reg);
+                                                        setSelectedStudentIds(reg.participants.map(p => p._id));
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
+
+                                                <button 
+                                                    title="Delete Permanently"
+                                                    onClick={() => handleDelete(reg._id)}
+                                                    className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

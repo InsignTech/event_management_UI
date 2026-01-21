@@ -152,8 +152,19 @@ export default function Home() {
         </section>
 
         {/* Schedule Section */}
-        <section id="schedule" className="py-24 relative overflow-hidden">
-             <div className="max-w-5xl mx-auto px-4">
+        <section id="schedule" className="py-24 relative overflow-hidden min-h-screen">
+             {/* Zoomed Background for bottom section */}
+             <div className="absolute inset-0 z-0 pointer-events-none">
+                <Image 
+                    src="/hero-bg.png" 
+                    alt="Background Pattern" 
+                    fill 
+                    className="object-cover object-center opacity-50 scale-125 selection:blur-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]/90" />
+             </div>
+
+             <div className="max-w-5xl mx-auto px-4 relative z-10">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">Event <span className="text-primary">Schedule</span></h2>
                     <p className="text-slate-400">Detailed roadmap of the 2-day championship.</p>
@@ -232,7 +243,10 @@ export default function Home() {
              </div>
         </section>
 
-        {/* Footer removed to use global footer */}
+        {/* Footer */}
+        <footer className="py-8 border-t border-white/10 text-center text-slate-400 text-sm relative z-10 bg-[#020617]/80 backdrop-blur-md">
+            <p>&copy; 2026 MES Youth Fest. Built with passion & creativity.</p>
+        </footer>
     </div>
   );
 }
