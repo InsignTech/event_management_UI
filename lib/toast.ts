@@ -1,12 +1,17 @@
 import { toast } from 'react-hot-toast';
 
 export const getErrorMessage = (error: any): string => {
-    if (error.response?.data?.message) {
-        return error.response.data.message;
+    const data = error.response?.data;
+
+    // Prioritize detailed errors if available
+    if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        return data.errors.map((e: any) => e.message || e).join(', ');
     }
-    if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
-        return error.response.data.errors.map((e: any) => e.message).join(', ');
+
+    if (data?.message) {
+        return data.message;
     }
+
     return error.message || 'An unexpected error occurred';
 };
 

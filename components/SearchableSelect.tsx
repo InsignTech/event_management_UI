@@ -14,12 +14,18 @@ interface SearchableSelectProps {
     onChange: (value: string) => void;
     placeholder?: string;
     label?: string;
+    disabled?: boolean;
 }
 
-export default function SearchableSelect({ options, value, onChange, placeholder = "Select...", label }: SearchableSelectProps) {
+export default function SearchableSelect({ options, value, onChange, placeholder = "Select...", label, disabled }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Close when disabled
+    useEffect(() => {
+        if (disabled && isOpen) setIsOpen(false);
+    }, [disabled, isOpen]);
 
     const selectedOption = options.find(opt => opt._id === value);
 
@@ -42,8 +48,12 @@ export default function SearchableSelect({ options, value, onChange, placeholder
             {label && <label className="text-xs text-muted-foreground">{label}</label>}
             <button
                 type="button"
+                disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm flex justify-between items-center hover:border-primary/50 transition-colors"
+                className={cn(
+                    "w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm flex justify-between items-center transition-colors",
+                    disabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary/50"
+                )}
             >
                 <span className={cn(!selectedOption && "text-muted-foreground")}>
                     {selectedOption ? selectedOption.name : placeholder}

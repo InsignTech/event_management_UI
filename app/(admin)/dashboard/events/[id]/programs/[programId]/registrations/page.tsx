@@ -294,13 +294,24 @@ export default function ProgramRegistrationsPage() {
                         </div>
 
                         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-                            <SearchableSelect 
-                                label="Filter by College"
-                                options={colleges}
-                                value={selectedCollege}
-                                onChange={setSelectedCollege}
-                                placeholder="Select College..."
-                            />
+                            <div className="relative">
+                                <SearchableSelect 
+                                    label="Filter by College"
+                                    options={colleges}
+                                    value={selectedCollege}
+                                    onChange={(val) => {
+                                        if (selectedStudentIds.length > 0) return;
+                                        setSelectedCollege(val);
+                                    }}
+                                    placeholder="Select College..."
+                                    disabled={selectedStudentIds.length > 0}
+                                />
+                                {selectedStudentIds.length > 0 && (
+                                    <p className="text-[10px] text-primary mt-1 flex items-center gap-1 font-bold">
+                                        <Lock className="h-3 w-3" /> College locked (Group members must be from same college)
+                                    </p>
+                                )}
+                            </div>
 
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -320,10 +331,22 @@ export default function ProgramRegistrationsPage() {
                                         {!selectedCollege ? "Select a college first" : "No students found"}
                                     </p>
                                 ) : (
-                                    allStudents.filter(s => !selectedStudentIds.includes(s._id)).map(student => (
+                                    allStudents
+                                        .filter(s => !selectedStudentIds.includes(s._id))
+                                        .filter(s => {
+                                            // Ensure same college if others are selected
+                                            if (selectedStudentIds.length === 0) return true;
+                                            const firstStudent = registrations.flatMap(r => r.participants).find(p => p._id === selectedStudentIds[0]) 
+                                                || allStudents.find(p => p._id === selectedStudentIds[0]);
+                                            return s.college._id === firstStudent?.college._id;
+                                        })
+                                        .map(student => (
                                         <button 
                                             key={student._id}
                                             onClick={() => {
+                                                if (selectedStudentIds.length === 0) {
+                                                    setSelectedCollege(student.college._id);
+                                                }
                                                 setSelectedStudentIds([...selectedStudentIds, student._id]);
                                             }}
                                             className="w-full text-left px-4 py-3 hover:bg-muted text-sm transition-colors flex justify-between items-center group"

@@ -7,7 +7,7 @@ import { showSuccess, showError } from '@/lib/toast';
 interface Registration {
     _id: string;
     chestNumber: string;
-    participants: { universityRegNo: string }[];
+    participants: { registrationCode: string }[];
     program: { _id: string, name: string, type: string };
     pointsObtained: number;
     rank: number;
@@ -286,7 +286,7 @@ export default function ScoringPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-0.5">
                                                 {reg.participants.map((p, i) => (
-                                                    <span key={i} className="text-xs">{p.universityRegNo}</span>
+                                                    <span key={i} className="text-xs">{p.registrationCode}</span>
                                                 ))}
                                             </div>
                                         </td>

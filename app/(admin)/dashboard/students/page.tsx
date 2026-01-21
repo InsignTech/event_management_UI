@@ -8,7 +8,8 @@ import { showError, showSuccess } from '@/lib/toast';
 interface Student {
     _id: string;
     name?: string;
-    universityRegNo: string;
+    registrationCode: string;
+    phone: string;
     course: string;
     year: string;
     gender: string;
@@ -37,9 +38,9 @@ export default function StudentsPage() {
     const [colleges, setColleges] = useState<{_id: string, name: string}[]>([]);
     const [newStudent, setNewStudent] = useState({
         name: '',
-        universityRegNo: '',
+        phone: '',
         course: '',
-        year: '1',
+        year: '',
         gender: 'male',
         college: '',
     });
@@ -102,7 +103,7 @@ export default function StudentsPage() {
                 setIsModalOpen(false);
                 setNewStudent({
                     name: '',
-                    universityRegNo: '',
+                    phone: '',
                     course: '',
                     year: '1',
                     gender: 'male',
@@ -170,20 +171,26 @@ export default function StudentsPage() {
                         <h2 className="text-xl font-bold mb-4">Register New Student</h2>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Student Name (Optional)</label>
+                                <label className="text-xs text-muted-foreground">Student Name</label>
                                 <input 
+                                    required
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={newStudent.name}
                                     onChange={e => setNewStudent({...newStudent, name: e.target.value})}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">University Reg No</label>
+                                <label className="text-xs text-muted-foreground">Phone Number</label>
                                 <input 
                                     required
+                                    maxLength={10}
+                                    type="tel"
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                                    value={newStudent.universityRegNo}
-                                    onChange={e => setNewStudent({...newStudent, universityRegNo: e.target.value})}
+                                    value={newStudent.phone}
+                                    onChange={e => {
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        if (val.length <= 10) setNewStudent({...newStudent, phone: val});
+                                    }}
                                 />
                             </div>
                             <SearchableSelect 
@@ -204,12 +211,13 @@ export default function StudentsPage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">Year</label>
+                                    <label className="text-xs text-muted-foreground">Year (Optional)</label>
                                     <select 
                                         className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                         value={newStudent.year}
                                         onChange={e => setNewStudent({...newStudent, year: e.target.value})}
                                     >
+                                        <option value="">Select Year</option>
                                         <option value="1">1st Year</option>
                                         <option value="2">2nd Year</option>
                                         <option value="3">3rd Year</option>
@@ -256,20 +264,34 @@ export default function StudentsPage() {
                         <h2 className="text-xl font-bold mb-4">Edit Student</h2>
                         <form onSubmit={handleUpdate} className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Student Name (Optional)</label>
+                                <label className="text-xs text-muted-foreground">Registration Code</label>
                                 <input 
+                                    disabled
+                                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm outline-none cursor-not-allowed"
+                                    value={currentStudent.registrationCode || ''}
+                                />
+                            </div>
+                             <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">Student Name</label>
+                                <input 
+                                    required
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={currentStudent.name || ''}
                                     onChange={e => setCurrentStudent({...currentStudent, name: e.target.value})}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">University Reg No</label>
+                                <label className="text-xs text-muted-foreground">Phone Number</label>
                                 <input 
                                     required
+                                    maxLength={10}
+                                    type="tel"
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                                    value={currentStudent.universityRegNo}
-                                    onChange={e => setCurrentStudent({...currentStudent, universityRegNo: e.target.value})}
+                                    value={currentStudent.phone}
+                                    onChange={e => {
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        if (val.length <= 10) setCurrentStudent({...currentStudent, phone: val});
+                                    }}
                                 />
                             </div>
                             <SearchableSelect 
@@ -289,12 +311,13 @@ export default function StudentsPage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">Year</label>
+                                    <label className="text-xs text-muted-foreground">Year (Optional)</label>
                                     <select 
                                         className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                                        value={currentStudent.year}
+                                        value={currentStudent.year || ''}
                                         onChange={e => setCurrentStudent({...currentStudent, year: e.target.value})}
                                     >
+                                        <option value="">Select Year</option>
                                         <option value="1">1st Year</option>
                                         <option value="2">2nd Year</option>
                                         <option value="3">3rd Year</option>
@@ -353,7 +376,7 @@ export default function StudentsPage() {
                         <Search className="h-4 w-4 text-muted-foreground mr-2" />
                         <input 
                             type="text" 
-                            placeholder="Search by Reg No, Name, Course..." 
+                            placeholder="Search by ID, Name, Phone..." 
                             className="bg-transparent border-none outline-none text-sm w-full"
                             value={searchTerm}
                             onChange={(e) => {
@@ -371,7 +394,8 @@ export default function StudentsPage() {
                         <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-bold">
                             <tr>
                                 <th className="px-6 py-4">Student Name</th>
-                                <th className="px-6 py-4">University Reg No</th>
+                                <th className="px-6 py-4">Reg Code</th>
+                                <th className="px-6 py-4">Phone</th>
                                 <th className="px-6 py-4">Course & Year</th>
                                 <th className="px-6 py-4">College</th>
                                 <th className="px-6 py-4">Gender</th>
@@ -380,18 +404,19 @@ export default function StudentsPage() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {loading ? (
-                                <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Loading students...</td></tr>
+                                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Loading students...</td></tr>
                             ) : filteredStudents.length === 0 ? (
-                                <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No students found.</td></tr>
+                                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">No students found.</td></tr>
                             ) : (
                                 filteredStudents.map((student) => (
                                     <tr key={student._id} className="hover:bg-muted/30 transition-colors group">
                                         <td className="px-6 py-4 font-medium">{student.name || <span className="text-muted-foreground italic text-xs">N/A</span>}</td>
-                                        <td className="px-6 py-4 font-mono text-xs">{student.universityRegNo}</td>
+                                        <td className="px-6 py-4 font-mono text-xs">{student.registrationCode}</td>
+                                        <td className="px-6 py-4 font-mono text-xs">{student.phone}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
                                                 <span>{student.course}</span>
-                                                <span className="text-xs text-muted-foreground">{student.year} Year</span>
+                                                {student.year && <span className="text-xs text-muted-foreground">{student.year} Year</span>}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-muted-foreground">{student.college?.name}</td>
