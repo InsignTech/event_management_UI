@@ -171,9 +171,10 @@ export default function StudentsPage() {
                         <h2 className="text-xl font-bold mb-4">Register New Student</h2>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Student Name</label>
+                                <label className="text-xs text-muted-foreground">Student Name (Max 70 chars)</label>
                                 <input 
                                     required
+                                    maxLength={70}
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={newStudent.name}
                                     onChange={e => setNewStudent({...newStudent, name: e.target.value})}
@@ -272,9 +273,10 @@ export default function StudentsPage() {
                                 />
                             </div>
                              <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">Student Name</label>
+                                <label className="text-xs text-muted-foreground">Student Name (Max 70 chars)</label>
                                 <input 
                                     required
+                                    maxLength={70}
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={currentStudent.name || ''}
                                     onChange={e => setCurrentStudent({...currentStudent, name: e.target.value})}
