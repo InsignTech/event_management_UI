@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 88, "column": 0}, "map": {"version":3,"sources":["file:///D:/PROJECT/MES/client/lib/api.ts"],"sourcesContent":["import axios from 'axios';\r\n\r\nconst api = axios.create({\r\n    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',\r\n    headers: {\r\n        'Content-Type': 'application/json',\r\n    },\r\n});\r\n\r\n// Add interceptor to include token\r\napi.interceptors.request.use((config) => {\r\n    if (typeof window !== 'undefined') {\r\n        const token = localStorage.getItem('token');\r\n        if (token) {\r\n            config.headers.Authorization = `Bearer ${token}`;\r\n        }\r\n    }\r\n    return config;\r\n});\r\n\r\nexport default api;\r\n"],"names":[],"mappings":";;;;AAAA;;AAEA,MAAM,MAAM,gJAAK,CAAC,MAAM,CAAC;IACrB,SAAS,QAAQ,GAAG,CAAC,mBAAmB,IAAI;IAC5C,SAAS;QACL,gBAAgB;IACpB;AACJ;AAEA,mCAAmC;AACnC,IAAI,YAAY,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC;IAC1B;;IAMA,OAAO;AACX;uCAEe"}}]
-}
