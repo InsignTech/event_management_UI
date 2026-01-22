@@ -76,7 +76,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             )}
 
             <aside className={cn(
-                "fixed left-0 top-0 h-screen w-64 bg-[#030712] border-r border-white/5 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0",
+                "fixed left-0 top-0 h-screen w-80 bg-[#030712] border-r border-white/5 flex flex-col z-50 transition-transform duration-300 lg:translate-x-0",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="h-16 flex items-center justify-between px-6 border-b border-white/5">
@@ -97,7 +97,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     </button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-3">
                     {visibleLinks.map((link) => {
                         const Icon = link.icon;
                         const isActive = pathname === link.href;
@@ -109,13 +109,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                     if (window.innerWidth < 1024) onClose();
                                 }}
                                 className={cn(
-                                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors",
                                     isActive 
                                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                                         : "text-muted-foreground hover:bg-white/5 hover:text-white"
                                 )}
                             >
-                                <Icon className={cn("h-4 w-4", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-white")} />
+                                <Icon className={cn("h-5 w-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-white")} />
                                 {link.name}
                             </Link>
                         );

@@ -29,7 +29,7 @@ export default function AdminLayout({
                 <div className="w-10" /> {/* Spacer */}
             </header>
 
-            <main className="flex-1 lg:ml-64 p-4 md:p-8">
+            <main className="flex-1 lg:ml-80 p-4 md:p-8">
                 {children}
             </main>
         </div>
