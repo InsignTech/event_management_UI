@@ -19,7 +19,7 @@ interface Registration {
     _id: string;
     chestNumber?: string;
     participants: Student[];
-    status: 'open' | 'confirmed' | 'reported' | 'participated' | 'absent' | 'cancelled' | 'rejected';
+    status: 'open' | 'confirmed' | 'reported' | 'participated' | 'absent' | 'cancelled' | 'rejected' | 'completed';
     cancellationReason?: string;
 }
 
@@ -578,6 +578,8 @@ export default function ProgramRegistrationsPage() {
                                                         ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
                                                         : reg.status === 'reported'
                                                         ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                        : reg.status === 'completed'
+                                                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
                                                         : reg.status === 'cancelled' || reg.status === 'rejected'
                                                         ? 'bg-red-500/10 text-red-500 border-red-500/20'
                                                         : 'bg-muted text-muted-foreground border-border'

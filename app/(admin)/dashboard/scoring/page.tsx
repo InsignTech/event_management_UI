@@ -81,7 +81,7 @@ export default function ScoringPage() {
     const fetchRegistrations = async (pageNum: number, searchStr: string = '') => {
         try {
             setLoading(true);
-            const res = await api.get(`/registrations/program/${selectedProgram}?page=${pageNum}&limit=20&search=${searchStr}&status=reported`);
+            const res = await api.get(`/registrations/program/${selectedProgram}?page=${pageNum}&limit=20&search=${searchStr}&status=reported,completed`);
             if (res.data.success) {
                 setRegistrations(res.data.registrations);
                 setPagination(res.data.pagination);
