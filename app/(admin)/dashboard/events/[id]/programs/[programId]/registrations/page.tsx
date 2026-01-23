@@ -17,9 +17,9 @@ interface Student {
 
 interface Registration {
     _id: string;
-    chestNumber: string;
+    chestNumber?: string;
     participants: Student[];
-    status: 'open' | 'confirmed' | 'participated' | 'absent' | 'cancelled';
+    status: 'open' | 'confirmed' | 'reported' | 'participated' | 'absent' | 'cancelled' | 'rejected';
     cancellationReason?: string;
 }
 
@@ -36,13 +36,16 @@ export default function ProgramRegistrationsPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
     const [cancellationReason, setCancellationReason] = useState('');
+    const [chestNumberInput, setChestNumberInput] = useState('');
+    const [isReporting, setIsReporting] = useState(false);
 
     const [colleges, setColleges] = useState<{_id: string, name: string}[]>([]);
     const [selectedCollege, setSelectedCollege] = useState('');
     const [allStudents, setAllStudents] = useState<Student[]>([]);
-    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+    const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
     const [studentSearch, setStudentSearch] = useState('');
     const [searchingStudents, setSearchingStudents] = useState(false);
 
@@ -117,12 +120,13 @@ export default function ProgramRegistrationsPage() {
     };
 
     const handleCreateOrUpdate = async () => {
-        if (selectedStudentIds.length === 0) return;
+        if (selectedStudents.length === 0) return;
         try {
+            const studentIds = selectedStudents.map(s => s._id);
             if (selectedRegistration) {
                 // Update
                 const res = await api.put(`/registrations/${selectedRegistration._id}`, {
-                    participants: selectedStudentIds
+                    participants: studentIds
                 });
                 if (res.data.success) {
                     showSuccess('Registration updated successfully');
@@ -133,7 +137,7 @@ export default function ProgramRegistrationsPage() {
                 // Create
                 const res = await api.post('/registrations', { 
                     program: programId, 
-                    participants: selectedStudentIds 
+                    participants: studentIds 
                 });
                 if (res.data.success) {
                     showSuccess('Registration successful');
@@ -149,7 +153,7 @@ export default function ProgramRegistrationsPage() {
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedRegistration(null);
-        setSelectedStudentIds([]);
+        setSelectedStudents([]);
         setSelectedCollege('');
         setStudentSearch('');
     };
@@ -198,10 +202,53 @@ export default function ProgramRegistrationsPage() {
         }
     };
 
+    const handleReportSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRegistration || !chestNumberInput) return;
+        setIsReporting(true);
+        try {
+            const res = await api.post(`/registrations/${selectedRegistration._id}/report`, {
+                chestNumber: chestNumberInput
+            });
+            if (res.data.success) {
+                showSuccess('Chest number assigned and reported');
+                setIsReportModalOpen(false);
+                setChestNumberInput('');
+                setSelectedRegistration(null);
+                fetchRegistrations();
+            }
+        } catch (error: any) {
+            showError(error);
+        } finally {
+            setIsReporting(false);
+        }
+    };
+
+    const handleExport = async (type: 'college' | 'program') => {
+        try {
+            const url = type === 'college' 
+                ? '/exports/college-wise' 
+                : `/exports/program-wise/${programId}`;
+            const filename = type === 'college' 
+                ? 'college_wise_registrations.xlsx' 
+                : `${programDetails?.name || 'program'}_registrations.xlsx`;
+            
+            const res = await api.get(url, { responseType: 'blob' });
+            const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            showSuccess('Export started');
+        } catch (error) {
+            showError(error);
+        }
+    };
+
 
 
     const filteredRegistrations = registrations.filter(r => 
-        r.chestNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.chestNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         r.participants.some(p => 
             p.registrationCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -227,15 +274,29 @@ export default function ProgramRegistrationsPage() {
                         </p>
                     )}
                 </div>
-                <button 
-                    disabled={isPublished}
-                    title={isPublished ? "Registration Closed (Published)" : "New Registration"}
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isPublished ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    New Registration
-                </button>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => handleExport('college')}
+                        className="flex items-center gap-2 bg-secondary hover:bg-muted text-foreground px-4 py-2 rounded-lg transition-colors border border-border"
+                    >
+                        Export College-wise
+                    </button>
+                    <button 
+                        onClick={() => handleExport('program')}
+                        className="flex items-center gap-2 bg-secondary hover:bg-muted text-foreground px-4 py-2 rounded-lg transition-colors border border-border"
+                    >
+                        Export Program-wise
+                    </button>
+                    <button 
+                        disabled={isPublished}
+                        title={isPublished ? "Registration Closed (Published)" : "New Registration"}
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isPublished ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        New Registration
+                    </button>
+                </div>
             </div>
 
             {/* Registration Modal */}
@@ -247,14 +308,13 @@ export default function ProgramRegistrationsPage() {
                         <div className="mb-4">
                             <label className="text-xs text-muted-foreground block mb-2">Selected Participants</label>
                             <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-secondary rounded-lg border border-border">
-                                {selectedStudentIds.length === 0 && <span className="text-xs text-muted-foreground italic">No students selected</span>}
-                                {selectedStudentIds.map(id => {
-                                    const student = allStudents.find(s => s._id === id) || registrations.flatMap(r => r.participants).find(p => p._id === id);
+                                {selectedStudents.length === 0 && <span className="text-xs text-muted-foreground italic">No students selected</span>}
+                                {selectedStudents.map(student => {
                                     return (
-                                        <span key={id} className="bg-primary/20 text-primary px-2 py-1 rounded-md text-xs flex items-center gap-1">
-                                            {student?.name || student?.registrationCode}
+                                        <span key={student._id} className="bg-primary/20 text-primary px-2 py-1 rounded-md text-xs flex items-center gap-1">
+                                            {student.name || student.registrationCode}
                                             <button 
-                                                onClick={() => setSelectedStudentIds(selectedStudentIds.filter(sid => sid !== id))}
+                                                onClick={() => setSelectedStudents(selectedStudents.filter(s => s._id !== student._id))}
                                                 className="hover:text-foreground"
                                             >
                                                 ×
@@ -272,13 +332,13 @@ export default function ProgramRegistrationsPage() {
                                     options={colleges}
                                     value={selectedCollege}
                                     onChange={(val) => {
-                                        if (selectedStudentIds.length > 0) return;
+                                        if (selectedStudents.length > 0) return;
                                         setSelectedCollege(val);
                                     }}
                                     placeholder="Select College..."
-                                    disabled={selectedStudentIds.length > 0}
+                                    disabled={selectedStudents.length > 0}
                                 />
-                                {selectedStudentIds.length > 0 && (
+                                {selectedStudents.length > 0 && (
                                     <p className="text-[10px] text-primary mt-1 flex items-center gap-1 font-bold">
                                         <Lock className="h-3 w-3" /> College locked (Group members must be from same college)
                                     </p>
@@ -304,22 +364,21 @@ export default function ProgramRegistrationsPage() {
                                     </p>
                                 ) : (
                                     allStudents
-                                        .filter(s => !selectedStudentIds.includes(s._id))
+                                        .filter(s => !selectedStudents.some(sel => sel._id === s._id))
                                         .filter(s => {
                                             // Ensure same college if others are selected
-                                            if (selectedStudentIds.length === 0) return true;
-                                            const firstStudent = registrations.flatMap(r => r.participants).find(p => p._id === selectedStudentIds[0]) 
-                                                || allStudents.find(p => p._id === selectedStudentIds[0]);
+                                            if (selectedStudents.length === 0) return true;
+                                            const firstStudent = selectedStudents[0];
                                             return s.college._id === firstStudent?.college._id;
                                         })
                                         .map(student => (
                                         <button 
                                             key={student._id}
                                             onClick={() => {
-                                                if (selectedStudentIds.length === 0) {
+                                                if (selectedStudents.length === 0) {
                                                     setSelectedCollege(student.college._id);
                                                 }
-                                                setSelectedStudentIds([...selectedStudentIds, student._id]);
+                                                setSelectedStudents([...selectedStudents, student]);
                                             }}
                                             className="w-full text-left px-4 py-3 hover:bg-muted text-sm transition-colors flex justify-between items-center group"
                                         >
@@ -343,7 +402,7 @@ export default function ProgramRegistrationsPage() {
                             </button>
                             <button 
                                 onClick={handleCreateOrUpdate}
-                                disabled={selectedStudentIds.length === 0}
+                                disabled={selectedStudents.length === 0}
                                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {selectedRegistration ? 'Save Changes' : 'Register'}
@@ -401,6 +460,52 @@ export default function ProgramRegistrationsPage() {
             )}
 
 
+            {/* Report Modal */}
+            {isReportModalOpen && selectedRegistration && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                             <Trophy className="h-5 w-5 text-yellow-500" />
+                             Report Registration
+                        </h2>
+                        <p className="text-xs text-muted-foreground mb-6">
+                            Enter chest number for participants of <span className="font-bold">{selectedRegistration.participants.map(p => p.name).join(', ')}</span>
+                        </p>
+                        
+                        <form onSubmit={handleReportSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-muted-foreground">Chest Number</label>
+                                <input 
+                                    required
+                                    autoFocus
+                                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                                    placeholder="e.g. C101"
+                                    value={chestNumberInput}
+                                    onChange={e => setChestNumberInput(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsReportModalOpen(false)}
+                                    className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
+                                >
+                                    Back
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isReporting}
+                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                >
+                                    {isReporting ? 'Reporting...' : 'Confirm Report'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground mr-2" />
                 <input 
@@ -441,7 +546,7 @@ export default function ProgramRegistrationsPage() {
                                     <tr key={reg._id} className="hover:bg-muted/30 transition-colors group">
                                         <td className="px-6 py-4">
                                             <span className="font-mono bg-primary/10 text-primary px-3 py-1 rounded-md text-base font-black">
-                                                {reg.chestNumber}
+                                                {reg.chestNumber || 'PENDING'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -471,7 +576,9 @@ export default function ProgramRegistrationsPage() {
                                                         ? 'bg-green-500/10 text-green-500 border-green-500/20'
                                                         : reg.status === 'confirmed'
                                                         ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                                                        : reg.status === 'cancelled'
+                                                        : reg.status === 'reported'
+                                                        ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                        : reg.status === 'cancelled' || reg.status === 'rejected'
                                                         ? 'bg-red-500/10 text-red-500 border-red-500/20'
                                                         : 'bg-muted text-muted-foreground border-border'
                                                 }`}>
@@ -498,22 +605,41 @@ export default function ProgramRegistrationsPage() {
                                                 )}
                                                 {reg.status === 'confirmed' && (
                                                     <button 
-                                                        title="Mark as Participated"
-                                                        onClick={() => handleStatusUpdate(reg._id, 'participated')}
-                                                        className="p-2 hover:bg-green-500/10 rounded-lg text-muted-foreground hover:text-green-500 transition-all"
+                                                        title="Mark as Reported (Assign Chest No)"
+                                                        onClick={() => { setSelectedRegistration(reg); setChestNumberInput(''); setIsReportModalOpen(true); }}
+                                                        className="p-2 hover:bg-yellow-500/10 rounded-lg text-muted-foreground hover:text-yellow-500 transition-all"
                                                     >
                                                         <Trophy className="h-4 w-4" />
                                                     </button>
                                                 )}
-                                                
-                                                {reg.status !== 'cancelled' && (
-                                                     <button 
-                                                        title="Cancel Registration"
-                                                        onClick={() => { setSelectedRegistration(reg); setIsCancelModalOpen(true); }}
-                                                        className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+
+                                                {reg.status === 'reported' && (
+                                                    <button 
+                                                        title="Mark as Participated"
+                                                        onClick={() => handleStatusUpdate(reg._id, 'participated')}
+                                                        className="p-2 hover:bg-green-500/10 rounded-lg text-muted-foreground hover:text-green-500 transition-all"
                                                     >
-                                                        <Ban className="h-4 w-4" />
+                                                        <CheckCircle className="h-4 w-4" />
                                                     </button>
+                                                )}
+                                                
+                                                {reg.status !== 'cancelled' && reg.status !== 'rejected' && (
+                                                    <div className="flex gap-1">
+                                                        <button 
+                                                            title="Reject Registration"
+                                                            onClick={() => handleStatusUpdate(reg._id, 'rejected')}
+                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+                                                        >
+                                                            <XCircle className="h-4 w-4" />
+                                                        </button>
+                                                        <button 
+                                                            title="Cancel Registration"
+                                                            onClick={() => { setSelectedRegistration(reg); setIsCancelModalOpen(true); }}
+                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+                                                        >
+                                                            <Ban className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
                                                 )}
 
 
@@ -521,7 +647,7 @@ export default function ProgramRegistrationsPage() {
                                                     title="Edit Registration"
                                                     onClick={() => {
                                                         setSelectedRegistration(reg);
-                                                        setSelectedStudentIds(reg.participants.map(p => p._id));
+                                                        setSelectedStudents(reg.participants);
                                                         setIsModalOpen(true);
                                                     }}
                                                     className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all"
