@@ -17,12 +17,13 @@ interface Result {
     rank: number;
     participants: {
         name: string;
-        chestNumber: string;
+        registrationCode: string;
         college: {
             name: string;
             logo?: string;
         };
     }[];
+    chestNumber?: string;
 }
 
 export default function ResultsPage() {
@@ -99,10 +100,10 @@ export default function ResultsPage() {
 
     const getRankIcon = (rank: number) => {
         switch (rank) {
-            case 1: return <Trophy className="h-8 w-8 text-yellow-500" />;
-            case 2: return <Medal className="h-8 w-8 text-slate-400" />;
-            case 3: return <Medal className="h-8 w-8 text-amber-700" />;
-            default: return <Award className="h-8 w-8 text-muted-foreground" />;
+            case 1: return <Trophy className="h-5 w-5 md:h-6 w-6 text-yellow-500" />;
+            case 2: return <Medal className="h-5 w-5 md:h-6 w-6 text-slate-400" />;
+            case 3: return <Medal className="h-5 w-5 md:h-6 w-6 text-amber-700" />;
+            default: return <Award className="h-5 w-5 md:h-6 w-6 text-muted-foreground" />;
         }
     };
 
@@ -197,48 +198,52 @@ export default function ResultsPage() {
                         ) : (
                             <div className="grid grid-cols-1 gap-6">
                                 {results.map((result) => (
-                                    <div key={result.rank} className={`group relative bg-card border ${getRankColor(result.rank)} rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 transition-all hover:scale-[1.01]`}>
-                                        <div className="shrink-0 flex items-center justify-center p-4 rounded-2xl bg-background/50 border border-inherit">
+                                    <div key={result.rank} className={`group relative bg-card border ${getRankColor(result.rank)} rounded-xl p-3 md:p-5 flex flex-row items-center gap-3 md:gap-4 transition-all hover:scale-[1.01]`}>
+                                        <div className="shrink-0 flex items-center justify-center p-2 md:p-3 rounded-lg md:rounded-xl bg-background/50 border border-inherit">
                                             {getRankIcon(result.rank)}
                                         </div>
                                         
-                                        <div className="flex-1 text-center md:text-left">
-                                            <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
-                                                <span className="text-sm font-black uppercase tracking-widest opacity-60">Rank {result.rank}</span>
-                                                <div className="h-px bg-current opacity-10 flex-1 hidden md:block"></div>
+                                        <div className="flex-1 text-left">
+                                            <div className="flex flex-row items-center gap-2 mb-1">
+                                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest opacity-60">Rank {result.rank}</span>
+                                                <div className="h-px bg-current opacity-10 flex-1"></div>
                                             </div>
                                             
                                             {result.participants.map((participant, pIndex) => (
-                                                <div key={pIndex} className="space-y-4">
-                                                    <h3 className="text-2xl md:text-3xl font-black tracking-tight">{participant.name}</h3>
-                                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground">
-                                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/50 border border-border text-xs font-bold">
-                                                            <User className="h-3 w-3" />
-                                                            {participant.chestNumber}
+                                                <div key={pIndex} className="space-y-1">
+                                                    <h3 className="text-lg md:text-2xl font-black tracking-tight line-clamp-1">{participant.name}</h3>
+                                                    <div className="flex flex-wrap items-center justify-start gap-1.5 md:gap-2 text-muted-foreground">
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full bg-background/50 border border-border text-[9px] md:text-[10px] font-bold" title="Registration Number">
+                                                            <User className="h-2.5 w-2.5 md:h-3 w-3" />
+                                                            {participant.registrationCode}
                                                         </div>
-                                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/50 border border-border text-xs font-bold">
-                                                            <School className="h-3 w-3" />
-                                                            {participant.college.name}
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[9px] md:text-[10px] font-bold" title="Chest Number">
+                                                            <Award className="h-2.5 w-2.5 md:h-3 w-3" />
+                                                            {result.chestNumber}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full bg-background/50 border border-border text-[9px] md:text-[10px] font-bold max-w-[150px] md:max-w-none">
+                                                            <School className="h-2.5 w-2.5 md:h-3 w-3" />
+                                                            <span className="truncate">{participant.college.name}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
 
-                                        <div className="shrink-0">
+                                        <div className="shrink-0 hidden xs:block">
                                             {result.participants[0].college.logo ? (
-                                                <div className="w-20 h-20 rounded-2xl bg-white p-3 shadow-lg border border-border/50">
+                                                <div className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-white p-1.5 md:p-2 shadow-sm md:shadow-lg border border-border/50">
                                                     <Image 
                                                         src={result.participants[0].college.logo} 
                                                         alt={result.participants[0].college.name} 
-                                                        width={80} 
-                                                        height={80} 
+                                                        width={56} 
+                                                        height={56} 
                                                         className="w-full h-full object-contain"
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center border border-border">
-                                                    <School className="h-8 w-8 text-muted-foreground/30" />
+                                                <div className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-muted flex items-center justify-center border border-border">
+                                                    <School className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground/30" />
                                                 </div>
                                             )}
                                         </div>
