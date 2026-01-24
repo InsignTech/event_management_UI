@@ -22,6 +22,8 @@ interface Program {
     duration: number;
     coordinators?: User[];
     event?: { name: string, _id: string }; // In case populated
+    isCancelled: boolean;
+    cancellationReason?: string;
 }
 
 export default function AllProgramsPage() {
@@ -32,6 +34,9 @@ export default function AllProgramsPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [showCancelled, setShowCancelled] = useState(false);
     const [currentProgram, setCurrentProgram] = useState<Program | null>(null);
 
     const [newProgram, setNewProgram] = useState({
@@ -72,7 +77,7 @@ export default function AllProgramsPage() {
     const fetchPrograms = async (eventId: string) => {
         setLoading(true);
         try {
-            const res = await api.get(`/programs/event/${eventId}`);
+            const res = await api.get(`/programs/event/${eventId}?includeCancelled=true`);
             if (res.data.success) {
                 setPrograms(res.data.data);
             }
@@ -128,13 +133,15 @@ export default function AllProgramsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!defaultEventId) return;
-        if (!confirm('Are you sure you want to delete this program? This will also remove all registrations for it.')) return;
+    const handleCancelProgram = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentProgram || !defaultEventId || !cancellationReason) return;
         try {
-            const res = await api.delete(`/programs/${id}`);
+            const res = await api.post(`/programs/${currentProgram._id}/cancel`, { reason: cancellationReason });
             if (res.data.success) {
-                showSuccess('Program deleted successfully');
+                showSuccess('Program cancelled successfully');
+                setIsCancelModalOpen(false);
+                setCancellationReason('');
                 fetchPrograms(defaultEventId);
             }
         } catch (error) {
@@ -142,10 +149,12 @@ export default function AllProgramsPage() {
         }
     };
 
-    const filteredPrograms = programs.filter(p => 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.venue.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredPrograms = programs.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.venue.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCancelled = showCancelled ? p.isCancelled : !p.isCancelled;
+        return matchesSearch && matchesCancelled;
+    });
 
     if (!loading && !defaultEventId) {
         return (
@@ -171,13 +180,24 @@ export default function AllProgramsPage() {
                         Managing programs for default event
                     </p>
                 </div>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors"
-                >
-                    <Plus className="h-4 w-4" />
-                    Create Program
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg border border-border">
+                        <span className="text-xs font-medium">Show Cancelled</span>
+                        <input 
+                            type="checkbox" 
+                            className="toggle-checkbox"
+                            checked={showCancelled}
+                            onChange={(e) => setShowCancelled(e.target.checked)}
+                        />
+                    </div>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Create Program
+                    </button>
+                </div>
             </div>
 
             {/* Create Modal */}
@@ -376,6 +396,48 @@ export default function AllProgramsPage() {
             )}
 
 
+            {/* Cancel Program Modal */}
+            {isCancelModalOpen && currentProgram && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 font-sans text-foreground">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-md p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold mb-2">Cancel Program</h2>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Are you sure you want to cancel <span className="font-bold">"{currentProgram.name}"</span>? 
+                            This action cannot be undone and will freeze all registrations.
+                        </p>
+                        <form onSubmit={handleCancelProgram} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">Cancellation Reason</label>
+                                <textarea 
+                                    required
+                                    rows={3}
+                                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                                    placeholder="Provide a reason for cancellation..."
+                                    value={cancellationReason}
+                                    onChange={e => setCancellationReason(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button"
+                                    onClick={() => { setIsCancelModalOpen(false); setCancellationReason(''); }}
+                                    className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
+                                >
+                                    Go Back
+                                </button>
+                                <button 
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg text-sm font-bold hover:bg-destructive/90 transition-colors"
+                                >
+                                    Confirm Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+
             <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground mr-2" />
                 <input 
@@ -396,8 +458,15 @@ export default function AllProgramsPage() {
                     filteredPrograms.map((program) => (
                         <div key={program._id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                    {program.category === 'on_stage' ? <Mic2 className="h-6 w-6" /> : <Tv className="h-6 w-6" />}
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                        {program.category === 'on_stage' ? <Mic2 className="h-6 w-6" /> : <Tv className="h-6 w-6" />}
+                                    </div>
+                                    {program.isCancelled && (
+                                        <span className="px-2 py-1 bg-destructive/10 text-destructive text-[10px] font-bold rounded-lg border border-destructive/20 uppercase">
+                                            Cancelled
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
                                     <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold border ${
@@ -435,30 +504,42 @@ export default function AllProgramsPage() {
                                 </div>
                             )}
 
+                            {program.isCancelled && program.cancellationReason && (
+                                <div className="mb-4 p-3 bg-destructive/5 border border-destructive/10 rounded-lg text-xs italic text-muted-foreground">
+                                    Reason: {program.cancellationReason}
+                                </div>
+                            )}
+
                             <div className="text-xs text-muted-foreground space-y-1 mb-4">
                                 <p>Start: {new Date(program.startTime).toLocaleString()}</p>
                                 <p>Duration: {program.duration} mins</p>
                             </div>
-                            <div className="flex gap-2 pt-4 border-t border-border">
-                                <Link 
-                                    href={`/dashboard/events/${defaultEventId}/programs/${program._id}/registrations`}
-                                    className="flex-1 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors text-center"
-                                >
-                                    Registrations
-                                </Link>
-                                <button 
-                                    onClick={() => { setCurrentProgram({...program}); setIsEditModalOpen(true); }}
-                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </button>
-                                <button 
-                                    onClick={() => handleDelete(program._id)}
-                                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
+                        <div className="flex gap-2 pt-4 border-t border-border">
+                            <Link 
+                                href={`/dashboard/events/${defaultEventId}/programs/${program._id}/registrations`}
+                                className="flex-1 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors text-center"
+                            >
+                                {program.isCancelled ? 'View Participants' : 'Registrations'}
+                            </Link>
+                            {!program.isCancelled && (
+                                <>
+                                    <button 
+                                        onClick={() => { setCurrentProgram({...program}); setIsEditModalOpen(true); }}
+                                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+                                        title="Edit Program"
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => { setCurrentProgram({...program}); setIsCancelModalOpen(true); }}
+                                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                        title="Cancel Program"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                         </div>
                     ))
                 )}

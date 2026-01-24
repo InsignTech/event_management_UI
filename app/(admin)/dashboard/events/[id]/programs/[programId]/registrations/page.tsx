@@ -32,7 +32,8 @@ export default function ProgramRegistrationsPage() {
     const [pagination, setPagination] = useState<{total: number, page: number, limit: number, pages: number} | null>(null);
     const [page, setPage] = useState(1);
     const [isPublished, setIsPublished] = useState(false);
-    const [programDetails, setProgramDetails] = useState<{name: string} | null>(null);
+    const [isCancelled, setIsCancelled] = useState(false);
+    const [programDetails, setProgramDetails] = useState<{name: string, isCancelled?: boolean, cancellationReason?: string} | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -110,6 +111,7 @@ export default function ProgramRegistrationsPage() {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
                 setIsPublished(res.data.isResultPublished || false);
+                setIsCancelled(res.data.program?.isCancelled || false);
                 setProgramDetails(res.data.program || null);
             }
         } catch (error) {
@@ -269,9 +271,17 @@ export default function ProgramRegistrationsPage() {
                 <div>
                     <h1 className="text-3xl font-bold">Registrations</h1>
                     {programDetails && (
-                        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 font-sans">
-                            Program: <span className="text-primary font-bold px-2 py-0.5 bg-primary/10 rounded">{programDetails.name}</span>
-                        </p>
+                        <div className="flex flex-col gap-1 mt-1">
+                            <p className="text-sm text-muted-foreground flex items-center gap-2 font-sans">
+                                Program: <span className="text-primary font-bold px-2 py-0.5 bg-primary/10 rounded">{programDetails.name}</span>
+                            </p>
+                            {isCancelled && (
+                                <div className="flex items-center gap-2 bg-destructive/10 text-destructive px-3 py-1.5 rounded-lg border border-destructive/20 text-xs font-bold w-fit animate-pulse">
+                                    <Ban className="h-4 w-4" />
+                                    PROGRAM CANCELLED: {programDetails.cancellationReason}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -288,12 +298,12 @@ export default function ProgramRegistrationsPage() {
                         Export Program-wise
                     </button>
                     <button 
-                        disabled={isPublished}
-                        title={isPublished ? "Registration Closed (Published)" : "New Registration"}
+                        disabled={isPublished || isCancelled}
+                        title={isCancelled ? "Program Cancelled" : isPublished ? "Registration Closed (Published)" : "New Registration"}
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isPublished ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        {isCancelled ? <Ban className="h-4 w-4" /> : isPublished ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                         New Registration
                     </button>
                 </div>
@@ -598,9 +608,10 @@ export default function ProgramRegistrationsPage() {
                                             <div className="flex items-center justify-end gap-1">
                                                 {reg.status === 'open' && (
                                                     <button 
-                                                        title="Confirm Registration"
+                                                        disabled={isCancelled}
+                                                        title={isCancelled ? "Program Cancelled" : "Confirm Registration"}
                                                         onClick={() => handleStatusUpdate(reg._id, 'confirmed')}
-                                                        className="p-2 hover:bg-blue-500/10 rounded-lg text-muted-foreground hover:text-blue-500 transition-all"
+                                                        className="p-2 hover:bg-blue-500/10 rounded-lg text-muted-foreground hover:text-blue-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                                     >
                                                         <CheckCircle className="h-4 w-4" />
                                                     </button>
@@ -628,16 +639,18 @@ export default function ProgramRegistrationsPage() {
                                                 {reg.status !== 'cancelled' && reg.status !== 'rejected' && (
                                                     <div className="flex gap-1">
                                                         <button 
-                                                            title="Reject Registration"
+                                                            disabled={isCancelled}
+                                                            title={isCancelled ? "Program Cancelled" : "Reject Registration"}
                                                             onClick={() => handleStatusUpdate(reg._id, 'rejected')}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all disabled:opacity-30"
                                                         >
                                                             <XCircle className="h-4 w-4" />
                                                         </button>
                                                         <button 
-                                                            title="Cancel Registration"
+                                                            disabled={isCancelled}
+                                                            title={isCancelled ? "Program Cancelled" : "Cancel Registration"}
                                                             onClick={() => { setSelectedRegistration(reg); setIsCancelModalOpen(true); }}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all"
+                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all disabled:opacity-30"
                                                         >
                                                             <Ban className="h-4 w-4" />
                                                         </button>
@@ -646,21 +659,23 @@ export default function ProgramRegistrationsPage() {
 
 
                                                 <button 
-                                                    title="Edit Registration"
+                                                    disabled={isCancelled}
+                                                    title={isCancelled ? "Program Cancelled" : "Edit Registration"}
                                                     onClick={() => {
                                                         setSelectedRegistration(reg);
                                                         setSelectedStudents(reg.participants);
                                                         setIsModalOpen(true);
                                                     }}
-                                                    className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all"
+                                                    className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all disabled:opacity-30"
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </button>
 
                                                 <button 
-                                                    title="Delete Permanently"
+                                                    disabled={isCancelled}
+                                                    title={isCancelled ? "Program Cancelled" : "Delete Permanently"}
                                                     onClick={() => handleDelete(reg._id)}
-                                                    className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20"
+                                                    className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 disabled:opacity-30"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
