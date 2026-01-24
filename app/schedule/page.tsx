@@ -54,12 +54,12 @@ export default function SchedulePage() {
             <Navbar />
             
             <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-4">
+                <div className="text-center mb-8 md:mb-12">
+                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-3">
                         Event <span className="text-primary italic">Schedule</span>
                     </h1>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                        Track all programs, venues, and timings across the MES Youth Fest. Real-time updates as events progress.
+                    <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+                        Track all programs, venues, and timings across the MES Youth Fest.
                     </p>
                 </div>
 
@@ -74,35 +74,35 @@ export default function SchedulePage() {
                 ) : (
                     <div className="space-y-12">
                         {Object.entries(groupedPrograms).map(([date, programs]: [string, any]) => (
-                            <div key={date} className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight text-primary">{date}</h2>
-                                    <div className="h-px bg-primary/20 flex-1"></div>
+                            <div key={date} className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-primary">{date}</h2>
+                                    <div className="h-px bg-primary/10 flex-1"></div>
                                 </div>
                                 
-                                <div className="space-y-4 relative before:absolute before:left-[31px] md:before:left-[39px] before:top-2 before:bottom-2 before:w-px before:bg-border/60">
+                                <div className="space-y-3 relative before:absolute before:left-[27px] md:before:left-[35px] before:top-2 before:bottom-2 before:w-px before:bg-border/40">
                                     {programs.map((program: Program) => (
-                                        <div key={program._id} className="relative pl-16 md:pl-24 group">
+                                        <div key={program._id} className="relative pl-12 md:pl-20 group">
                                             {/* Timeline Dot */}
-                                            <div className="absolute left-[24px] md:left-[32px] top-4 w-4 h-4 rounded-full border-2 border-background bg-primary group-hover:scale-125 transition-transform z-10 shadow-[0_0_0_4px_rgba(var(--primary),0.1)]"></div>
+                                            <div className="absolute left-[22px] md:left-[30px] top-4 w-3 md:w-4 h-3 md:h-4 rounded-full border-2 border-background bg-primary group-hover:scale-125 transition-transform z-10 shadow-[0_0_0_3px_rgba(var(--primary),0.1)]"></div>
                                             
-                                            <div className="bg-card border border-border/50 rounded-2xl p-4 md:p-6 hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="bg-card border border-border/50 rounded-xl p-3 md:p-4 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 flex flex-row items-center justify-between gap-3">
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-3 mb-2 text-xs font-black uppercase tracking-wider text-muted-foreground/60">
-                                                        <Clock className="h-3 w-3 text-primary" />
+                                                    <div className="flex items-center gap-2 mb-1 text-[10px] md:text-xs font-black uppercase tracking-wider text-muted-foreground/60">
+                                                        <Clock className="h-2.5 w-2.5 md:h-3 w-3 text-primary" />
                                                         <span>
                                                             {new Date(program.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            <span className="mx-2 opacity-30">|</span>
-                                                            {program.duration} mins
+                                                            <span className="mx-1.5 opacity-30">|</span>
+                                                            {program.duration}m
                                                         </span>
                                                     </div>
                                                     
-                                                    <h3 className="text-lg md:text-xl font-bold mb-2 truncate group-hover:text-primary transition-colors">{program.name}</h3>
+                                                    <h3 className="text-base md:text-lg font-bold mb-1 truncate group-hover:text-primary transition-colors">{program.name}</h3>
                                                     
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                        <div className="flex items-center gap-2">
-                                                            <MapPin className="h-3 w-3 text-primary" />
-                                                            <span className="truncate max-w-[150px] md:max-w-none">{program.venue}</span>
+                                                    <div className="flex items-center gap-3 text-[11px] md:text-sm text-muted-foreground">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <MapPin className="h-2.5 w-2.5 md:h-3 w-3 text-primary" />
+                                                            <span className="truncate max-w-[120px] md:max-w-none">{program.venue}</span>
                                                         </div>
                                                     </div>
                                                 </div>
