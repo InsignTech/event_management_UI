@@ -25,11 +25,11 @@ export default function RootLayout({
         <Toaster position="top-right" />
         <Navbar />
         <main className="min-h-screen pt-16">{children}</main>
-        <footer className="bg-black py-8 border-t border-gray-800">
+        {/* <footer className="bg-black py-8 border-t border-gray-800">
           <div className="max-w-7xl mx-auto px-4 text-center text-gray-500">
             <p>&copy; 2026 MES Youth Fest. All rights reserved.</p>
           </div>
-        </footer>
+        </footer> */}
       </body>
     </html>
   );
