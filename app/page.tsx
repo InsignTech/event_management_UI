@@ -2,30 +2,28 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, MapPin, Trophy, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, MapPin, Trophy, ShieldCheck, ChevronRight, Users, Award, School } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Navbar from '@/components/Navbar';
+import api from '@/lib/api';
+import { useEffect } from 'react';
 
-interface EventItem {
-    id: number;
-    time: string;
-    title: string;
-    category: 'ceremony' | 'dance' | 'music' | 'theatre' | 'literary';
-    location: string;
-    day: 1 | 2;
+interface Program {
+    _id: string;
+    name: string;
+    type: 'single' | 'group';
+    category: 'on_stage' | 'off_stage';
+    venue: string;
+    startTime: string;
+    duration: number;
 }
 
-const SCHEDULE_DATA: EventItem[] = [
-    { id: 1, day: 1, time: "09:00 AM", title: "Inaugural Ceremony", category: 'ceremony', location: "Main Auditorium" },
-    { id: 2, day: 1, time: "10:30 AM", title: "Thiruvathira", category: 'dance', location: "Stage 1" },
-    { id: 3, day: 1, time: "11:00 AM", title: "Mappilappattu (Male)", category: 'music', location: "Stage 2" },
-    { id: 4, day: 1, time: "02:00 PM", title: "Oppana", category: 'dance', location: "Main Auditorium" },
-    { id: 5, day: 1, time: "04:00 PM", title: "Mono Act", category: 'theatre', location: "Stage 3" },
-    { id: 6, day: 2, time: "09:00 AM", title: "Group Song", category: 'music', location: "Main Auditorium" },
-    { id: 7, day: 2, time: "11:00 AM", title: "Kolkali", category: 'dance', location: "Ground" },
-    { id: 8, day: 2, time: "02:00 PM", title: "Duffmuttu", category: 'dance', location: "Stage 2" },
-    { id: 9, day: 2, time: "05:00 PM", title: "Closing Ceremony", category: 'ceremony', location: "Main Auditorium" },
-];
+interface Stats {
+    totalColleges: number;
+    totalPrograms: number;
+    totalStudents: number;
+    totalRegistrations: number;
+}
 
 const CategoryBadge = ({ category }: { category: string }) => {
     const styles = {
@@ -43,8 +41,43 @@ const CategoryBadge = ({ category }: { category: string }) => {
 };
 
 export default function Home() {
-  const [activeDay, setActiveDay] = useState<1 | 2>(1);
-  const filteredEvents = SCHEDULE_DATA.filter(e => e.day === activeDay);
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [schedule, setSchedule] = useState<Program[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, scheduleRes] = await Promise.all([
+          api.get('/public/stats'),
+          api.get('/public/schedule')
+        ]);
+        
+        if (statsRes.data.success) setStats(statsRes.data.data);
+        if (scheduleRes.data.success) setSchedule(scheduleRes.data.data);
+      } catch (error) {
+        console.error("Failed to fetch home data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const groupedPrograms = schedule.reduce((acc: any, program) => {
+    const date = new Date(program.startTime).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+    });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(program);
+    return acc;
+  }, {});
+
+  const dates = Object.keys(groupedPrograms);
+  const activeDate = dates[activeDayIndex];
+  const filteredEvents = activeDate ? groupedPrograms[activeDate] : [];
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-primary/30">
@@ -133,14 +166,13 @@ export default function Home() {
                 </div>
             </div>
             
-             {/* Stats Strip */}
              <div className="relative md:absolute bottom-0 w-full border-t border-white/5 bg-[#020617]/95 backdrop-blur-sm z-10">
                 <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
                     {[
-                        { label: "Colleges", value: "50+" },
-                        { label: "Participants", value: "2000+" },
-                        { label: "Events", value: "85+" },
-                        { label: "Prize Pool", value: "₹2L+" },
+                        { label: "Colleges", value: stats?.totalColleges ? `${stats.totalColleges}+` : "..." },
+                        { label: "Participants", value: stats?.totalStudents ? `${stats.totalStudents}+` : "..." },
+                        { label: "Programs", value: stats?.totalPrograms ? `${stats.totalPrograms}+` : "..." },
+                        { label: "Registrations", value: stats?.totalRegistrations ? `${stats.totalRegistrations}+` : "..." },
                     ].map((stat) => (
                         <div key={stat.label} className="py-8 text-center">
                             <div className="text-3xl font-black text-white mb-1">{stat.value}</div>
@@ -171,28 +203,24 @@ export default function Home() {
                 </div>
 
                 {/* Day Tabs */}
-                <div className="flex justify-center mb-12">
-                    <div className="bg-white/5 p-1.5 rounded-2xl inline-flex border border-white/10">
-                        <button 
-                            onClick={() => setActiveDay(1)}
-                            className={cn(
-                                "px-8 py-3 rounded-xl text-sm font-bold transition-all",
-                                activeDay === 1 ? "bg-primary text-white shadow-lg shadow-orange-500/25" : "text-slate-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            Day 01 <span className="block text-[10px] font-normal opacity-70">Jan 15</span>
-                        </button>
-                        <button 
-                            onClick={() => setActiveDay(2)}
-                            className={cn(
-                                "px-8 py-3 rounded-xl text-sm font-bold transition-all",
-                                activeDay === 2 ? "bg-primary text-white shadow-lg shadow-orange-500/25" : "text-slate-400 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            Day 02 <span className="block text-[10px] font-normal opacity-70">Jan 16</span>
-                        </button>
+                {dates.length > 0 && (
+                    <div className="flex justify-center mb-12">
+                        <div className="bg-white/5 p-1.5 rounded-2xl inline-flex border border-white/10">
+                            {dates.map((date, idx) => (
+                                <button 
+                                    key={date}
+                                    onClick={() => setActiveDayIndex(idx)}
+                                    className={cn(
+                                        "px-8 py-3 rounded-xl text-sm font-bold transition-all",
+                                        activeDayIndex === idx ? "bg-primary text-white shadow-lg shadow-orange-500/25" : "text-slate-400 hover:text-white hover:bg-white/5"
+                                    )}
+                                >
+                                    Day {String(idx + 1).padStart(2, '0')} <span className="block text-[10px] font-normal opacity-70">{date}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Timeline */}
                 <div className="relative">
@@ -200,8 +228,14 @@ export default function Home() {
                     <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 via-primary/20 to-transparent md:-translate-x-1/2" />
 
                     <div className="space-y-8">
-                        {filteredEvents.map((event, index) => (
-                            <div key={event.id} className={cn("relative flex items-center md:justify-between", 
+                        {loading ? (
+                            <div className="flex justify-center py-10">
+                                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                            </div>
+                        ) : filteredEvents.length === 0 ? (
+                            <div className="text-center py-10 opacity-40 italic">Check back later for scheduled programs.</div>
+                        ) : filteredEvents.map((event: Program, index: number) => (
+                            <div key={event._id} className={cn("relative flex items-center md:justify-between", 
                                 index % 2 === 0 ? "md:flex-row-reverse" : ""
                             )}>
                                 {/* Timeline Dot */}
@@ -222,17 +256,17 @@ export default function Home() {
                                             <CategoryBadge category={event.category} />
                                              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-black/20 px-2 py-1 rounded-md">
                                                 <Clock className="w-3 h-3" />
-                                                {event.time}
+                                                {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
 
-                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary transition-colors">{event.title}</h3>
+                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary transition-colors">{event.name}</h3>
                                         
                                         <div className={cn("flex items-center gap-2 text-sm text-slate-400",
                                              index % 2 !== 0 ? "md:justify-end" : ""
                                         )}>
                                             <MapPin className="w-4 h-4 text-primary/70" />
-                                            {event.location}
+                                            {event.venue}
                                         </div>
                                     </div>
                                 </div>
