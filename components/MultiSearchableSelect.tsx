@@ -13,6 +13,8 @@ interface MultiSearchableSelectProps {
     options: Option[];
     value: string[]; // IDs
     onChange: (value: string[]) => void;
+    onSearch?: (term: string) => void;
+    loading?: boolean;
     placeholder?: string;
     label?: string;
     disabled?: boolean;
@@ -22,6 +24,8 @@ export default function MultiSearchableSelect({
     options, 
     value, 
     onChange, 
+    onSearch,
+    loading,
     placeholder = "Select participants...", 
     label,
     disabled 
@@ -45,6 +49,14 @@ export default function MultiSearchableSelect({
         opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (opt.registrationCode && opt.registrationCode.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const timer = setTimeout(() => {
+            if (onSearch) onSearch(searchTerm);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm, isOpen, onSearch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

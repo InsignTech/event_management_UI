@@ -1,10 +1,11 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, Trash2, UserCheck, Users, Trophy, ChevronLeft, ChevronRight, Lock, CheckCircle, XCircle, Ban, AlertCircle, Edit } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
+import MultiSearchableSelect from '@/components/MultiSearchableSelect';
 import { showError, showSuccess } from '@/lib/toast';
 
 interface Student {
@@ -92,8 +93,9 @@ export default function ProgramRegistrationsPage() {
         }
     };
 
-    const searchStudents = async () => {
-        if (!selectedCollege && !studentSearch) {
+    const searchStudents = useCallback(async (term?: string) => {
+        const queryTerm = typeof term === 'string' ? term : studentSearch;
+        if (!selectedCollege && !queryTerm) {
             setAllStudents([]);
             return;
         }
@@ -102,7 +104,7 @@ export default function ProgramRegistrationsPage() {
             const res = await api.get('/students', {
                 params: {
                     college: selectedCollege,
-                    search: studentSearch
+                    search: queryTerm
                 }
             });
             if (res.data.success) {
@@ -113,7 +115,7 @@ export default function ProgramRegistrationsPage() {
         } finally {
             setSearchingStudents(false);
         }
-    };
+    }, [selectedCollege, studentSearch]);
 
     const fetchRegistrations = async (pageNum: number = 1) => {
         try {
@@ -349,7 +351,7 @@ export default function ProgramRegistrationsPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+                        <div className="space-y-4">
                             <div className="relative">
                                 <SearchableSelect 
                                     label="Filter by College"
@@ -369,52 +371,33 @@ export default function ProgramRegistrationsPage() {
                                 )}
                             </div>
 
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <input 
-                                    className="w-full bg-secondary border border-border rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-primary"
-                                    placeholder="Search by Name or Reg No..."
-                                    value={studentSearch}
-                                    onChange={e => setStudentSearch(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto border border-border rounded-lg divide-y divide-border min-h-[200px]">
-                                {searchingStudents ? (
-                                    <p className="p-4 text-center text-xs text-muted-foreground">Searching...</p>
-                                ) : allStudents.length === 0 ? (
-                                    <p className="p-4 text-center text-xs text-muted-foreground italic truncate">
-                                        {!selectedCollege ? "Select a college first" : "No students found"}
-                                    </p>
-                                ) : (
-                                    allStudents
-                                        .filter(s => !selectedStudents.some(sel => sel._id === s._id))
-                                        .filter(s => {
-                                            // Ensure same college if others are selected
-                                            if (selectedStudents.length === 0) return true;
-                                            const firstStudent = selectedStudents[0];
-                                            return s.college._id === firstStudent?.college._id;
-                                        })
-                                        .map(student => (
-                                        <button 
-                                            key={student._id}
-                                            onClick={() => {
-                                                if (selectedStudents.length === 0) {
-                                                    setSelectedCollege(student.college._id);
-                                                }
-                                                setSelectedStudents([...selectedStudents, student]);
-                                            }}
-                                            className="w-full text-left px-4 py-3 hover:bg-muted text-sm transition-colors flex justify-between items-center group"
-                                        >
-                                            <div>
-                                                <p className="font-bold">{student.name || 'Unknown student'}</p>
-                                                <p className="text-[10px] text-muted-foreground truncate">{student.registrationCode} • {student.college.name}</p>
-                                            </div>
-                                            <Plus className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                        </button>
-                                    ))
-                                )}
-                            </div>
+                            <MultiSearchableSelect 
+                                label="Select Participants"
+                                options={allStudents.map(s => ({ ...s, name: s.name || 'Unknown' }))}
+                                value={selectedStudents.map(s => s._id)}
+                                onChange={(ids) => {
+                                    const newSelected = allStudents.filter(s => ids.includes(s._id));
+                                    // Make sure we keep already selected students who might not be in the current allStudents (search results)
+                                    const combined = [...selectedStudents];
+                                    ids.forEach(id => {
+                                        if (!combined.some(s => s._id === id)) {
+                                            const found = allStudents.find(s => s._id === id);
+                                            if (found) combined.push(found);
+                                        }
+                                    });
+                                    setSelectedStudents(combined.filter(s => ids.includes(s._id)));
+                                    
+                                    if (ids.length > 0 && !selectedCollege) {
+                                        const firstId = ids[0];
+                                        const firstStudent = allStudents.find(s => s._id === firstId) || selectedStudents.find(s => s._id === firstId);
+                                        if (firstStudent) setSelectedCollege(firstStudent.college._id);
+                                    }
+                                }}
+                                onSearch={searchStudents}
+                                loading={searchingStudents}
+                                placeholder="Search for students by name or code..."
+                                disabled={isCancelled}
+                            />
                         </div>
 
                         <div className="flex gap-3 mt-6">

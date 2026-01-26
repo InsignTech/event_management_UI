@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
     Search, 
@@ -95,6 +95,7 @@ export default function ProgramRegistrationsPage() {
     const [allStudents, setAllStudents] = useState<Student[]>([]);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSearchingStudents, setIsSearchingStudents] = useState(false);
 
     // Cancellation State
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -122,6 +123,25 @@ export default function ProgramRegistrationsPage() {
             showError(error);
         }
     };
+
+    const fetchStudents = useCallback(async (search?: string) => {
+        setIsSearchingStudents(true);
+        try {
+            const res = await api.get('/students', { 
+                params: { 
+                    college: collegeId,
+                    search: search || undefined
+                } 
+            });
+            if (res.data.success) {
+                setAllStudents(res.data.data);
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setIsSearchingStudents(false);
+        }
+    }, [collegeId]);
 
     const fetchRegistrations = async () => {
         setLoading(true);
@@ -509,6 +529,8 @@ export default function ProgramRegistrationsPage() {
                                     options={allStudents.map(s => ({ ...s, name: s.name || 'Unknown' }))}
                                     value={selectedStudents}
                                     onChange={setSelectedStudents}
+                                    onSearch={fetchStudents}
+                                    loading={isSearchingStudents}
                                     placeholder="Search for students by name or code..."
                                 />
                             </div>
