@@ -13,6 +13,7 @@ import {
     Trophy, 
     Settings, 
     LogOut,
+    CheckSquare,
     X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,6 +61,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             adminOnly: true 
         },
         { name: 'Scoring', href: '/dashboard/scoring', icon: Trophy },
+        { name: 'Registration', href: '/dashboard/registration', icon: CheckSquare },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
 
