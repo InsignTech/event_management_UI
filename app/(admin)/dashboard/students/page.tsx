@@ -46,6 +46,10 @@ export default function StudentsPage() {
         college: '',
     });
 
+    // Success Modal State
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [addedStudent, setAddedStudent] = useState<Student | null>(null);
+
     useEffect(() => {
         fetchColleges();
     }, []);
@@ -101,7 +105,9 @@ export default function StudentsPage() {
         try {
             const res = await api.post('/students', newStudent);
             if (res.data.success) {
-                showSuccess('Student registered successfully');
+                // showSuccess('Student registered successfully'); // Removing toast in favor of the new modal
+                setAddedStudent(res.data.data);
+                setIsSuccessModalOpen(true);
                 setIsModalOpen(false);
                 setNewStudent({
                     name: '',
@@ -379,6 +385,45 @@ export default function StudentsPage() {
             )}
 
 
+            {/* Success Success Modal */}
+            {isSuccessModalOpen && addedStudent && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans text-foreground">
+                    <div className="bg-card border-2 border-primary/50 rounded-3xl w-full max-w-sm p-8 shadow-2xl animate-in zoom-in-95 duration-300 text-center relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-primary"></div>
+
+
+                        <h2 className="text-2xl font-black mb-1 tracking-tight">Student Registered!</h2>
+                        <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-8">Registration Details</p>
+                        
+                        <div className="space-y-4 mb-8">
+                            <div className="bg-secondary/50 p-4 rounded-2xl border border-border">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Registration Code</p>
+                                <p className="text-2xl font-black text-primary font-mono tracking-tighter">{addedStudent.registrationCode}</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-3 text-left">
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase mb-0.5">Name</p>
+                                    <p className="text-sm font-bold truncate">{addedStudent.name || 'N/A'}</p>
+                                </div>
+                                <div className="bg-secondary/30 p-3 rounded-xl border border-border/50">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase mb-0.5">Phone</p>
+                                    <p className="text-sm font-black font-mono tracking-tight">{addedStudent.phone}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            onClick={() => { setIsSuccessModalOpen(false); setAddedStudent(null); }}
+                            className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl text-xs font-black transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
+                        >
+                            DONE
+                        </button>
+                    </div>
+                </div>
+            )}
+
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="w-full">
                     <SearchableSelect 
@@ -397,7 +442,7 @@ export default function StudentsPage() {
                         <Search className="h-4 w-4 text-muted-foreground mr-2" />
                         <input 
                             type="text" 
-                            placeholder="Search by ID, Name, Phone..." 
+                            placeholder="Search by Reg Code, Name, Phone..." 
                             className="bg-transparent border-none outline-none text-sm w-full"
                             value={searchTerm}
                             onChange={(e) => {
