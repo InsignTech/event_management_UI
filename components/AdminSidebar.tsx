@@ -14,6 +14,7 @@ import {
     Settings, 
     LogOut,
     CheckSquare,
+    FileCheck2,
     X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -50,9 +51,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
     const links = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Colleges', href: '/dashboard/colleges', icon: School },
-        { name: 'Events', href: '/dashboard/events', icon: CalendarDays },
+    
+        // { name: 'Events', href: '/dashboard/events', icon: CalendarDays },
         { name: 'Programs', href: '/dashboard/programs', icon: Mic2 },
+        
+        { name: 'Registration', href: '/dashboard/registration', icon: CheckSquare },
+        { name: 'Program Reporting', href: '/dashboard/reporting', icon: FileCheck2 },
         { name: 'Students', href: '/dashboard/students', icon: Users },
         { 
             name: 'Users', 
@@ -61,8 +65,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             adminOnly: true 
         },
         { name: 'Scoring', href: '/dashboard/scoring', icon: Trophy },
-        { name: 'Registration', href: '/dashboard/registration', icon: CheckSquare },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+       { name: 'Colleges', href: '/dashboard/colleges', icon: School },
+        // { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
 
     const visibleLinks = links.filter(link => !link.adminOnly || userRole === 'super_admin');

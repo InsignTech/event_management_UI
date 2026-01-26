@@ -1,0 +1,156 @@
+"use client";
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { 
+    ChevronLeft, 
+    Mic2,
+    Calendar,
+    ArrowRight,
+    Search
+} from 'lucide-react';
+import api from '@/lib/api';
+import { showError } from '@/lib/toast';
+import Link from 'next/link';
+
+interface Program {
+    _id: string;
+    name: string;
+    category: string;
+    type: string;
+    startTime?: string;
+    venue?: string;
+}
+
+export default function ReportingCollegeProgramsPage() {
+    const params = useParams();
+    const { collegeId } = params;
+    
+    const [programs, setPrograms] = useState<Program[]>([]);
+    const [college, setCollege] = useState<{name: string} | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (collegeId) {
+            fetchCollege();
+            fetchPrograms();
+        }
+    }, [collegeId]);
+
+    const fetchCollege = async () => {
+        try {
+            const res = await api.get(`/colleges/${collegeId}`);
+            if (res.data.success) {
+                setCollege(res.data.data);
+            }
+        } catch (error) {
+            showError(error);
+        }
+    };
+
+    const fetchPrograms = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get(`/registrations/college/${collegeId}/programs`);
+            if (res.data.success) {
+                setPrograms(res.data.data);
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredPrograms = programs.filter(p => 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="space-y-6 font-sans text-foreground">
+            {/* Header */}
+            <div className="flex flex-col gap-1">
+                <Link 
+                    href="/dashboard/reporting"
+                    className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-primary transition-colors mb-2 w-fit"
+                >
+                    <ChevronLeft className="h-3 w-3" />
+                    BACK TO COLLEGES
+                </Link>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tight">{college?.name || 'College Programs'}</h1>
+                        <p className="text-sm text-muted-foreground mt-1">Select a program to manage reporting and participation</p>
+                    </div>
+
+                    <div className="flex items-center px-4 py-2 bg-card border border-border rounded-xl w-full sm:max-w-xs shadow-sm focus-within:border-primary/50 transition-all">
+                        <Search className="h-4 w-4 text-muted-foreground mr-3" />
+                        <input 
+                            type="text" 
+                            placeholder="Search programs..." 
+                            className="bg-transparent border-none outline-none text-sm w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Programs List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading ? (
+                    <div className="col-span-full py-20 text-center">
+                        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-muted-foreground font-black animate-pulse uppercase tracking-widest text-xs">Fetching registered programs...</p>
+                    </div>
+                ) : filteredPrograms.length === 0 ? (
+                    <div className="col-span-full py-20 bg-muted/30 border-2 border-dashed border-border rounded-3xl text-center">
+                        <Mic2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+                        <p className="text-muted-foreground font-bold italic">No programs registered for this college.</p>
+                    </div>
+                ) : (
+                    filteredPrograms.map((program) => (
+                        <Link 
+                            key={program._id} 
+                            href={`/dashboard/reporting/${collegeId}/${program._id}`}
+                            className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all group relative overflow-hidden flex flex-col justify-between"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Mic2 className="h-12 w-12" />
+                            </div>
+                            
+                            <div>
+                                <div className="flex flex-col gap-1 mb-4">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 w-fit px-2 py-0.5 rounded">
+                                        {program.category}
+                                    </span>
+                                    <h3 className="font-black text-xl leading-tight group-hover:text-primary transition-colors">
+                                        {program.name}
+                                    </h3>
+                                </div>
+
+                                <div className="space-y-2 mt-4">
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        {program.type.toUpperCase()} PROGRAM
+                                    </div>
+                                    {program.venue && (
+                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                                            VENUE: {program.venue}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-between text-primary font-black text-xs uppercase tracking-widest">
+                                <span>Manage Reporting</span>
+                                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </Link>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
