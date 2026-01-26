@@ -271,15 +271,6 @@ export default function ProgramReportingPage() {
                                         {reg.status}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {reg.status !== 'participated' && (
-                                            <button 
-                                                title="Reject"
-                                                onClick={() => handleStatusUpdate(reg._id, 'rejected')}
-                                                className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
-                                            >
-                                                <Ban className="h-3.5 w-3.5" />
-                                            </button>
-                                        )}
                                         {reg.chestNumber && (
                                             <span className="bg-primary/10 text-primary px-2 py-0.5 rounded font-mono text-[10px] font-black border border-primary/20">
                                                 {reg.chestNumber}

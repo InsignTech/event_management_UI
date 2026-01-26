@@ -337,27 +337,25 @@ export default function ProgramRegistrationsPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {(reg.status === 'open' || reg.status === 'confirmed') && (
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1.5">
                                                 <button 
-                                                    title="Edit Participants"
                                                     onClick={() => {
                                                         setSelectedRegistration(reg);
                                                         setSelectedStudents(reg.participants.map(p => p._id));
                                                         setIsNewModalOpen(true);
                                                     }}
-                                                    className="p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-colors"
+                                                    className="px-2 py-1 bg-secondary hover:bg-muted text-muted-foreground hover:text-foreground border border-border rounded-lg text-[9px] font-black transition-all uppercase tracking-widest"
                                                 >
-                                                    <Edit className="h-3.5 w-3.5" />
+                                                    EDIT
                                                 </button>
                                                 <button 
-                                                    title="Cancel Registration"
                                                     onClick={() => {
                                                         setSelectedRegistration(reg);
                                                         setIsCancelModalOpen(true);
                                                     }}
-                                                    className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                                                    className="px-2 py-1 bg-destructive/10 hover:bg-destructive text-destructive hover:text-white border border-destructive/20 rounded-lg text-[9px] font-black transition-all uppercase tracking-widest"
                                                 >
-                                                    <Ban className="h-3.5 w-3.5" />
+                                                    CANCEL
                                                 </button>
                                             </div>
                                         )}

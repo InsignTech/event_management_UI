@@ -34,6 +34,7 @@ export default function ProgramRegistrationsPage() {
     const [isPublished, setIsPublished] = useState(false);
     const [isCancelled, setIsCancelled] = useState(false);
     const [programDetails, setProgramDetails] = useState<{name: string, isCancelled?: boolean, cancellationReason?: string} | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string>('confirmed');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -55,7 +56,7 @@ export default function ProgramRegistrationsPage() {
             fetchRegistrations(page);
             fetchColleges();
         }
-    }, [programId, page]);
+    }, [programId, page, statusFilter]);
 
     // Debounced student search
     useEffect(() => {
@@ -106,7 +107,8 @@ export default function ProgramRegistrationsPage() {
     const fetchRegistrations = async (pageNum: number = 1) => {
         try {
             setLoading(true);
-            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50`);
+            const statusParam = statusFilter === 'all' ? '' : `&status=${statusFilter}`;
+            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50${statusParam}`);
             if (res.data.success) {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
@@ -516,15 +518,33 @@ export default function ProgramRegistrationsPage() {
                 </div>
             )}
 
-            <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg max-w-md">
-                <Search className="h-4 w-4 text-muted-foreground mr-2" />
-                <input 
-                    type="text" 
-                    placeholder="Search by Chest No, Name or Reg No..." 
-                    className="bg-transparent border-none outline-none text-sm w-full"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center px-4 py-2 bg-card border border-border rounded-lg w-full max-w-md shadow-sm">
+                    <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                    <input 
+                        type="text" 
+                        placeholder="Search by Chest No, Name or Reg No..." 
+                        className="bg-transparent border-none outline-none text-sm w-full"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                
+                <div className="flex items-center gap-2 w-full sm:w-fit">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">STATUS:</span>
+                    <select 
+                        className="bg-secondary border border-border rounded-lg px-3 py-2 text-xs font-black outline-none focus:border-primary transition-all w-full sm:w-auto"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">ALL STATUSES</option>
+                        <option value="open">OPEN</option>
+                        <option value="confirmed">CONFIRMED</option>
+                        <option value="reported">REPORTED</option>
+                        <option value="participated">PARTICIPATED</option>
+                        <option value="cancelled">CANCELLED</option>
+                    </select>
+                </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden font-sans">
@@ -581,101 +601,87 @@ export default function ProgramRegistrationsPage() {
                                         </td>
                                         <td className="px-6 py-4 capitalize">
                                             <div className="flex flex-col gap-1 items-start">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border tracking-wider uppercase ${
+                                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border tracking-wider uppercase ${
                                                     reg.status === 'participated'
-                                                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                                         : reg.status === 'confirmed'
                                                         ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
                                                         : reg.status === 'reported'
-                                                        ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                        ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
                                                         : reg.status === 'completed'
-                                                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                                         : reg.status === 'cancelled' || reg.status === 'rejected'
-                                                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                        ? 'bg-destructive/10 text-destructive border-destructive/20'
                                                         : 'bg-muted text-muted-foreground border-border'
                                                 }`}>
                                                     {reg.status.replace('_', ' ')}
                                                 </span>
                                                 {reg.cancellationReason && (
-                                                    <span className="text-[10px] text-destructive italic max-w-[150px] truncate" title={reg.cancellationReason}>
-                                                        {reg.cancellationReason}
+                                                    <span className="text-[10px] text-destructive italic max-w-[150px] truncate font-bold mt-1 px-1" title={reg.cancellationReason}>
+                                                        REASON: {reg.cancellationReason}
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
 
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1">
+                                            <div className="flex flex-wrap items-center justify-end gap-2">
                                                 {reg.status === 'open' && (
                                                     <button 
                                                         disabled={isCancelled}
-                                                        title={isCancelled ? "Program Cancelled" : "Confirm Registration"}
                                                         onClick={() => handleStatusUpdate(reg._id, 'confirmed')}
-                                                        className="p-2 hover:bg-blue-500/10 rounded-lg text-muted-foreground hover:text-blue-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-[10px] font-black transition-all active:scale-[0.98] disabled:opacity-30 uppercase tracking-widest shadow-sm"
                                                     >
-                                                        <CheckCircle className="h-4 w-4" />
+                                                        CONFIRM
                                                     </button>
                                                 )}
                                                 {reg.status === 'confirmed' && (
                                                     <button 
-                                                        title="Mark as Reported (Assign Chest No)"
                                                         onClick={() => { setSelectedRegistration(reg); setChestNumberInput(''); setIsReportModalOpen(true); }}
-                                                        className="p-2 hover:bg-yellow-500/10 rounded-lg text-muted-foreground hover:text-yellow-500 transition-all"
+                                                        className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-[10px] font-black transition-all active:scale-[0.98] uppercase tracking-widest shadow-sm"
                                                     >
-                                                        <Trophy className="h-4 w-4" />
+                                                        REPORT
                                                     </button>
                                                 )}
 
                                                 {reg.status === 'reported' && (
                                                     <button 
-                                                        title="Mark as Participated"
                                                         onClick={() => handleStatusUpdate(reg._id, 'participated')}
-                                                        className="p-2 hover:bg-green-500/10 rounded-lg text-muted-foreground hover:text-green-500 transition-all"
+                                                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-black transition-all active:scale-[0.98] uppercase tracking-widest shadow-sm"
                                                     >
-                                                        <CheckCircle className="h-4 w-4" />
+                                                        PARTICIPATE
                                                     </button>
                                                 )}
                                                 
                                                 {reg.status !== 'cancelled' && reg.status !== 'rejected' && (
-                                                    <div className="flex gap-1">
+                                                    <>
                                                         <button 
                                                             disabled={isCancelled}
-                                                            title={isCancelled ? "Program Cancelled" : "Reject Registration"}
-                                                            onClick={() => handleStatusUpdate(reg._id, 'rejected')}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all disabled:opacity-30"
-                                                        >
-                                                            <XCircle className="h-4 w-4" />
-                                                        </button>
-                                                        <button 
-                                                            disabled={isCancelled}
-                                                            title={isCancelled ? "Program Cancelled" : "Cancel Registration"}
                                                             onClick={() => { setSelectedRegistration(reg); setIsCancelModalOpen(true); }}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-500 transition-all disabled:opacity-30"
+                                                            className="px-3 py-1.5 bg-destructive/10 hover:bg-destructive text-destructive hover:text-white border border-destructive/20 rounded-lg text-[10px] font-black transition-all active:scale-[0.98] disabled:opacity-30 uppercase tracking-widest"
                                                         >
-                                                            <Ban className="h-4 w-4" />
+                                                            CANCEL
                                                         </button>
-                                                    </div>
+                                                    </>
                                                 )}
-
 
                                                 <button 
                                                     disabled={isCancelled}
-                                                    title={isCancelled ? "Program Cancelled" : "Edit Registration"}
                                                     onClick={() => {
                                                         setSelectedRegistration(reg);
                                                         setSelectedStudents(reg.participants);
                                                         setIsModalOpen(true);
                                                     }}
-                                                    className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all disabled:opacity-30"
+                                                    className="px-3 py-1.5 bg-secondary hover:bg-muted text-foreground border border-border rounded-lg text-[10px] font-black transition-all active:scale-[0.98] disabled:opacity-30 uppercase tracking-widest"
                                                 >
-                                                    <Edit className="h-4 w-4" />
+                                                    EDIT
                                                 </button>
 
                                                 <button 
                                                     disabled={isCancelled}
-                                                    title={isCancelled ? "Program Cancelled" : "Delete Permanently"}
                                                     onClick={() => handleDelete(reg._id)}
-                                                    className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 disabled:opacity-30"
+                                                    className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-all disabled:opacity-30"
+                                                    title="Delete Permanently"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
