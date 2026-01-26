@@ -10,11 +10,13 @@ import {
     UserCheck,
     Users,
     ClipboardCheck,
-    Ban
+    Ban,
+    Edit
 } from 'lucide-react';
 import api from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
 import Link from 'next/link';
+import MultiSearchableSelect from '@/components/MultiSearchableSelect';
 
 interface Student {
     _id: string;
@@ -88,11 +90,15 @@ export default function ProgramRegistrationsPage() {
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // New Registration Modal State
+    // New/Edit Registration Modal State
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [allStudents, setAllStudents] = useState<Student[]>([]);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Cancellation State
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
 
     useEffect(() => {
         if (collegeId && programId) {
@@ -162,14 +168,51 @@ export default function ProgramRegistrationsPage() {
         if (selectedStudents.length === 0) return;
         setIsSubmitting(true);
         try {
-            const res = await api.post('/registrations', {
-                program: programId,
-                participants: selectedStudents
+            if (selectedRegistration) {
+                // Update
+                const res = await api.put(`/registrations/${selectedRegistration._id}`, {
+                    participants: selectedStudents
+                });
+                if (res.data.success) {
+                    showSuccess('Registration updated successfully');
+                    setIsNewModalOpen(false);
+                    setSelectedRegistration(null);
+                    setSelectedStudents([]);
+                    fetchRegistrations();
+                }
+            } else {
+                // Create
+                const res = await api.post('/registrations', {
+                    program: programId,
+                    participants: selectedStudents
+                });
+                if (res.data.success) {
+                    showSuccess('New registration added successfully');
+                    setIsNewModalOpen(false);
+                    setSelectedStudents([]);
+                    fetchRegistrations();
+                }
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCancelSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRegistration || !cancellationReason) return;
+        setIsSubmitting(true);
+        try {
+            const res = await api.post(`/registrations/${selectedRegistration._id}/cancel`, {
+                reason: cancellationReason
             });
             if (res.data.success) {
-                showSuccess('New registration added successfully');
-                setIsNewModalOpen(false);
-                setSelectedStudents([]);
+                showSuccess('Registration cancelled successfully');
+                setIsCancelModalOpen(false);
+                setCancellationReason('');
+                setSelectedRegistration(null);
                 fetchRegistrations();
             }
         } catch (error) {
@@ -212,7 +255,11 @@ export default function ProgramRegistrationsPage() {
 
                     <div className="flex items-center gap-2">
                         <button 
-                            onClick={() => setIsNewModalOpen(true)}
+                            onClick={() => {
+                                setSelectedRegistration(null);
+                                setSelectedStudents([]);
+                                setIsNewModalOpen(true);
+                            }}
                             className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 active:scale-[0.98] shadow-lg shadow-primary/20"
                         >
                             <Plus className="h-4 w-4" />
@@ -282,13 +329,42 @@ export default function ProgramRegistrationsPage() {
                                     <div className={`px-3 py-1 rounded-full text-[10px] font-black border uppercase tracking-[0.1em] ${
                                         reg.status === 'open' 
                                             ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' 
-                                            : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                            : reg.status === 'confirmed'
+                                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                            : 'bg-red-500/10 text-red-600 border-red-500/20'
                                     }`}>
                                         {reg.status}
                                     </div>
-                                    <span className="text-[10px] font-bold text-muted-foreground font-mono">
-                                        ID: {reg._id.slice(-6).toUpperCase()}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {(reg.status === 'open' || reg.status === 'confirmed') && (
+                                            <div className="flex items-center gap-1">
+                                                <button 
+                                                    title="Edit Participants"
+                                                    onClick={() => {
+                                                        setSelectedRegistration(reg);
+                                                        setSelectedStudents(reg.participants.map(p => p._id));
+                                                        setIsNewModalOpen(true);
+                                                    }}
+                                                    className="p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-colors"
+                                                >
+                                                    <Edit className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button 
+                                                    title="Cancel Registration"
+                                                    onClick={() => {
+                                                        setSelectedRegistration(reg);
+                                                        setIsCancelModalOpen(true);
+                                                    }}
+                                                    className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                                                >
+                                                    <Ban className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <span className="text-[10px] font-bold text-muted-foreground font-mono">
+                                            ID: {reg._id.slice(-6).toUpperCase()}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3 mb-6">
@@ -353,6 +429,49 @@ export default function ProgramRegistrationsPage() {
                 </div>
             )}
 
+            {/* Cancellation Reason Modal */}
+            {isCancelModalOpen && selectedRegistration && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-sans text-foreground">
+                    <div className="bg-card border border-border rounded-3xl w-full max-w-sm p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Ban className="h-8 w-8 text-destructive" />
+                        </div>
+                        <h2 className="text-2xl font-black text-center mb-2 tracking-tight">Cancel Registration?</h2>
+                        <p className="text-xs text-muted-foreground text-center mb-6">
+                            Please provide a reason for cancelling this registration.
+                        </p>
+                        
+                        <form onSubmit={handleCancelSubmit} className="space-y-4">
+                            <textarea 
+                                required
+                                rows={3}
+                                className="w-full bg-secondary border border-border rounded-2xl px-4 py-3 text-sm outline-none focus:border-destructive transition-all resize-none"
+                                placeholder="e.g. Student absent, disqualified..."
+                                value={cancellationReason}
+                                onChange={e => setCancellationReason(e.target.value)}
+                            />
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={() => { setIsCancelModalOpen(false); setSelectedRegistration(null); setCancellationReason(''); }}
+                                    className="px-4 py-3 bg-secondary hover:bg-muted text-foreground border border-border rounded-xl text-xs font-black transition-all active:scale-[0.98]"
+                                >
+                                    BACK
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isSubmitting || !cancellationReason}
+                                    className="px-4 py-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-destructive/20 disabled:opacity-50"
+                                >
+                                    {isSubmitting ? 'CANCELLING...' : 'CONFIRM CANCEL'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* New Registration Modal */}
             {isNewModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 font-sans text-foreground">
@@ -362,7 +481,7 @@ export default function ProgramRegistrationsPage() {
                                 <Plus className="h-7 w-7 text-primary" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black tracking-tight">New Registration</h2>
+                                <h2 className="text-2xl font-black tracking-tight">{selectedRegistration ? 'Edit Registration' : 'New Registration'}</h2>
                                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">{program?.name} • {college?.name}</p>
                             </div>
                         </div>
@@ -387,50 +506,13 @@ export default function ProgramRegistrationsPage() {
 
                             {/* Students Selection */}
                             <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Select Participants</label>
-                                    <span className="text-[10px] font-black text-primary">{selectedStudents.length} SELECTED</span>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
-                                    {allStudents.length === 0 ? (
-                                        <div className="col-span-full py-12 text-center bg-secondary/20 rounded-2xl border border-dashed border-border">
-                                            <p className="text-xs text-muted-foreground font-bold italic">No students found for this college.</p>
-                                            <Link href="/dashboard/students" className="text-primary hover:underline text-[10px] font-black mt-2 inline-block">ADD STUDENTS FIRST</Link>
-                                        </div>
-                                    ) : (
-                                        allStudents.map(student => (
-                                            <button 
-                                                key={student._id}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (selectedStudents.includes(student._id)) {
-                                                        setSelectedStudents(selectedStudents.filter(id => id !== student._id));
-                                                    } else {
-                                                        setSelectedStudents([...selectedStudents, student._id]);
-                                                    }
-                                                }}
-                                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                                                    selectedStudents.includes(student._id)
-                                                        ? 'bg-primary/10 border-primary shadow-sm'
-                                                        : 'bg-secondary/30 border-border hover:border-primary/30'
-                                                }`}
-                                            >
-                                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
-                                                    selectedStudents.includes(student._id) ? 'bg-primary border-primary' : 'border-border bg-background'
-                                                }`}>
-                                                    {selectedStudents.includes(student._id) && <CheckCircle className="h-4 w-4 text-primary-foreground" />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className={`text-xs font-black truncate ${selectedStudents.includes(student._id) ? 'text-primary' : 'text-foreground'}`}>
-                                                        {student.name || 'Student'}
-                                                    </p>
-                                                    <p className="text-[10px] opacity-60 font-mono font-medium">{student.registrationCode}</p>
-                                                </div>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
+                                <MultiSearchableSelect 
+                                    label="Select Participants"
+                                    options={allStudents.map(s => ({ ...s, name: s.name || 'Unknown' }))}
+                                    value={selectedStudents}
+                                    onChange={setSelectedStudents}
+                                    placeholder="Search for students by name or code..."
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
@@ -446,7 +528,7 @@ export default function ProgramRegistrationsPage() {
                                     disabled={isSubmitting || selectedStudents.length === 0}
                                     className="px-6 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-50"
                                 >
-                                    {isSubmitting ? 'REGISTERING...' : 'CONFIRM REGISTRATION'}
+                                    {isSubmitting ? 'SAVING...' : selectedRegistration ? 'UPDATE REGISTRATION' : 'CONFIRM REGISTRATION'}
                                 </button>
                             </div>
                         </form>
