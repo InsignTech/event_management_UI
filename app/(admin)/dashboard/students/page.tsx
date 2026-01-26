@@ -22,6 +22,7 @@ interface Student {
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCollege, setSelectedCollege] = useState('');
     const [page, setPage] = useState(1);
@@ -96,6 +97,7 @@ export default function StudentsPage() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
             const res = await api.post('/students', newStudent);
             if (res.data.success) {
@@ -113,12 +115,15 @@ export default function StudentsPage() {
             }
         } catch (error) {
             showError(error);
+        } finally {
+            setSubmitting(false);
         }
     };
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentStudent) return;
+        setSubmitting(true);
         try {
             const updateData = {
                 ...currentStudent,
@@ -132,6 +137,8 @@ export default function StudentsPage() {
             }
         } catch (error) {
             showError(error);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -248,9 +255,15 @@ export default function StudentsPage() {
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
+                                    disabled={submitting}
+                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Register
+                                    {submitting ? (
+                                        <>
+                                            <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                            Registering...
+                                        </>
+                                    ) : 'Register'}
                                 </button>
                             </div>
                         </form>
@@ -349,9 +362,15 @@ export default function StudentsPage() {
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
+                                    disabled={submitting}
+                                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Save Changes
+                                    {submitting ? (
+                                        <>
+                                            <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : 'Save Changes'}
                                 </button>
                             </div>
                         </form>
