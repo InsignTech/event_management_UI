@@ -166,17 +166,22 @@ export default function Home() {
                 </div>
             </div>
             
-             <div className="relative md:absolute bottom-0 w-full border-t border-white/5 bg-[#020617]/95 backdrop-blur-sm z-10">
+             <div className="relative md:absolute bottom-0 w-full border-t border-white/5 bg-[#020617]/95 backdrop-blur-md z-10">
                 <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
                     {[
-                        { label: "Colleges", value: stats?.totalColleges ? `${stats.totalColleges}+` : "..." },
-                        { label: "Participants", value: stats?.totalStudents ? `${stats.totalStudents}+` : "..." },
-                        { label: "Programs", value: stats?.totalPrograms ? `${stats.totalPrograms}+` : "..." },
-                        { label: "Registrations", value: stats?.totalRegistrations ? `${stats.totalRegistrations}+` : "..." },
+                        { label: "Colleges", value: stats?.totalColleges ?? "...", icon: <School className="h-4 w-4 text-primary" /> },
+                        { label: "Participants", value: stats?.totalStudents ?? "...", icon: <Users className="h-4 w-4 text-sky-400" /> },
+                        { label: "Programs", value: stats?.totalPrograms ?? "...", icon: <Award className="h-4 w-4 text-orange-400" /> },
+                        { label: "Registrations", value: stats?.totalRegistrations ?? "...", icon: <ShieldCheck className="h-4 w-4 text-emerald-400" /> },
                     ].map((stat) => (
-                        <div key={stat.label} className="py-8 text-center">
-                            <div className="text-3xl font-black text-white mb-1">{stat.value}</div>
-                            <div className="text-xs uppercase tracking-widest text-slate-500 font-bold">{stat.label}</div>
+                        <div key={stat.label} className="py-6 md:py-8 text-center group hover:bg-white/[0.02] transition-colors">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                {stat.icon}
+                                <div className="text-2xl md:text-3xl font-black text-white tabular-nums">
+                                    {stat.value}
+                                </div>
+                            </div>
+                            <div className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">{stat.label}</div>
                         </div>
                     ))}
                 </div>

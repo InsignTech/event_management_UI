@@ -45,7 +45,7 @@ export default function AllProgramsPage() {
         category: 'on_stage',
         venue: '',
         startTime: '',
-        duration: 30,
+        duration: 0,
         coordinators: [] as string[]
     });
 
@@ -103,7 +103,7 @@ export default function AllProgramsPage() {
                     category: 'on_stage',
                     venue: '',
                     startTime: '',
-                    duration: 30,
+                    duration: 0,
                     coordinators: []
                 });
                 fetchPrograms(defaultEventId);
@@ -512,7 +512,7 @@ export default function AllProgramsPage() {
 
                             <div className="text-xs text-muted-foreground space-y-1 mb-4">
                                 <p>Start: {new Date(program.startTime).toLocaleString()}</p>
-                                <p>Duration: {program.duration} mins</p>
+                                {/* <p>Duration: {program.duration} mins</p> */}
                             </div>
                         <div className="flex gap-2 pt-4 border-t border-border">
                             <Link 
