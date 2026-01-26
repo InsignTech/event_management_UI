@@ -284,7 +284,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="py-8 border-t border-white/10 text-center text-slate-400 text-sm relative z-10 bg-[#020617]/80 backdrop-blur-md">
-            <p>&copy; 2026 MES Youth Fest. Built with passion & creativity.</p>
+            <p>&copy; 2026 MES Youth Fest.</p>
         </footer>
     </div>
   );
