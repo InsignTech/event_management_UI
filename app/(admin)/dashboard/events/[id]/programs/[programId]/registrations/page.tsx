@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, Trash2, UserCheck, Users, Trophy, ChevronLeft, ChevronRight, Lock, CheckCircle, XCircle, Ban, AlertCircle, Edit } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -26,6 +26,9 @@ interface Registration {
 export default function ProgramRegistrationsPage() {
     const params = useParams();
     const { id: eventId, programId } = params;
+    const searchParams = useSearchParams();
+    const collegeIdFilter = searchParams.get('collegeId');
+    
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +49,14 @@ export default function ProgramRegistrationsPage() {
 
     const [colleges, setColleges] = useState<{_id: string, name: string}[]>([]);
     const [selectedCollege, setSelectedCollege] = useState('');
+    
+    // Pre-select college if coming from college context
+    useEffect(() => {
+        if (collegeIdFilter) {
+            setSelectedCollege(collegeIdFilter);
+        }
+    }, [collegeIdFilter]);
+
     const [allStudents, setAllStudents] = useState<Student[]>([]);
     const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
     const [studentSearch, setStudentSearch] = useState('');
@@ -56,7 +67,7 @@ export default function ProgramRegistrationsPage() {
             fetchRegistrations(page);
             fetchColleges();
         }
-    }, [programId, page, statusFilter]);
+    }, [programId, page, statusFilter, collegeIdFilter]);
 
     // Debounced student search
     useEffect(() => {
@@ -108,7 +119,8 @@ export default function ProgramRegistrationsPage() {
         try {
             setLoading(true);
             const statusParam = statusFilter === 'all' ? '' : `&status=${statusFilter}`;
-            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50${statusParam}`);
+            const collegeParam = collegeIdFilter ? `&collegeId=${collegeIdFilter}` : '';
+            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50${statusParam}${collegeParam}`);
             if (res.data.success) {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
@@ -344,15 +356,15 @@ export default function ProgramRegistrationsPage() {
                                     options={colleges}
                                     value={selectedCollege}
                                     onChange={(val) => {
-                                        if (selectedStudents.length > 0) return;
+                                        if (selectedStudents.length > 0 || collegeIdFilter) return;
                                         setSelectedCollege(val);
                                     }}
                                     placeholder="Select College..."
-                                    disabled={selectedStudents.length > 0}
+                                    disabled={selectedStudents.length > 0 || !!collegeIdFilter}
                                 />
-                                {selectedStudents.length > 0 && (
+                                {(selectedStudents.length > 0 || collegeIdFilter) && (
                                     <p className="text-[10px] text-primary mt-1 flex items-center gap-1 font-bold">
-                                        <Lock className="h-3 w-3" /> College locked (Group members must be from same college)
+                                        <Lock className="h-3 w-3" /> College locked
                                     </p>
                                 )}
                             </div>

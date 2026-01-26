@@ -318,7 +318,7 @@ export default function CollegesPage() {
                                     {collegePrograms.map((program) => (
                                         <Link 
                                             key={program._id} 
-                                            href={`/dashboard/events/${program.event}/programs/${program._id}/registrations`}
+                                            href={`/dashboard/events/${program.event}/programs/${program._id}/registrations?collegeId=${currentCollege?._id}`}
                                             className="p-4 bg-muted/40 border border-border rounded-xl hover:border-primary/30 hover:bg-muted/60 transition-all group block"
                                         >
                                             <div className="flex justify-between items-center">
