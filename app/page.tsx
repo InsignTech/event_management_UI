@@ -141,7 +141,7 @@ export default function Home() {
                 <div className="max-w-2xl mx-auto text-base md:text-xl text-slate-400 leading-relaxed font-light flex flex-col items-center gap-4">
                     <p className="px-4">
                         The biggest inter-college art fest is back. Conducted by <strong className="text-yellow-400 font-bold">MES Youth Wing Kerala</strong>. 
-                        Join us for 2 days of spectacular performances and fierce competition.
+                        Join us for 3 days of spectacular performances and fierce competition.
                     </p>
                     {/* Youth Fest Logo - Responsive sizing */}
                     <div className="relative w-64 md:w-80 h-24 md:h-32 mt-4">

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import SearchableSelect from '@/components/SearchableSelect';
 import MultiSearchableSelect from '@/components/MultiSearchableSelect';
 import { showError, showSuccess } from '@/lib/toast';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface Student {
     _id: string;
@@ -29,6 +30,7 @@ export default function ProgramRegistrationsPage() {
     const { id: eventId, programId } = params;
     const searchParams = useSearchParams();
     const collegeIdFilter = searchParams.get('collegeId');
+    const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration'] });
     
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [loading, setLoading] = useState(true);
@@ -58,17 +60,25 @@ export default function ProgramRegistrationsPage() {
         }
     }, [collegeIdFilter]);
 
+    // Set default status filter based on user role
+    useEffect(() => {
+        if (userRole === 'registration') {
+            setStatusFilter('open');
+            setPage(1);
+        }
+    }, [userRole]);
+
     const [allStudents, setAllStudents] = useState<Student[]>([]);
     const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
     const [studentSearch, setStudentSearch] = useState('');
     const [searchingStudents, setSearchingStudents] = useState(false);
 
     useEffect(() => {
-        if (programId) {
+        if (programId && userRole) {
             fetchRegistrations(page);
             fetchColleges();
         }
-    }, [programId, page, statusFilter, collegeIdFilter]);
+    }, [programId, page, statusFilter, collegeIdFilter, userRole]);
 
     // Debounced student search
     useEffect(() => {
@@ -531,13 +541,20 @@ export default function ProgramRegistrationsPage() {
                         className="bg-secondary border border-border rounded-lg px-3 py-2 text-xs font-black outline-none focus:border-primary transition-all w-full sm:w-auto"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
+                        disabled={userRole === 'registration'}
                     >
-                        <option value="all">ALL STATUSES</option>
-                        <option value="open">OPEN</option>
-                        <option value="confirmed">CONFIRMED</option>
-                        <option value="reported">REPORTED</option>
-                        <option value="participated">PARTICIPATED</option>
-                        <option value="cancelled">CANCELLED</option>
+                        {userRole === 'registration' ? (
+                            <option value="open">OPEN</option>
+                        ) : (
+                            <>
+                                <option value="all">ALL STATUSES</option>
+                                <option value="open">OPEN</option>
+                                <option value="confirmed">CONFIRMED</option>
+                                <option value="reported">REPORTED</option>
+                                <option value="participated">PARTICIPATED</option>
+                                <option value="cancelled">CANCELLED</option>
+                            </>
+                        )}
                     </select>
                 </div>
             </div>

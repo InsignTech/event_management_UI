@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import Link from 'next/link';
 import { showError, showSuccess } from '@/lib/toast';
 import MultiUserSelect from '@/components/MultiUserSelect';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 interface User {
     _id: string;
@@ -27,6 +28,7 @@ interface Program {
 export default function EventProgramsPage() {
     const params = useParams();
     const eventId = params.id;
+    const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration'] });
     const [programs, setPrograms] = useState<Program[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -404,7 +406,13 @@ export default function EventProgramsPage() {
                             <div className="flex gap-2 pt-4 border-t border-border">
                                 <Link 
                                     href={`/dashboard/events/${eventId}/programs/${program._id}/registrations`}
-                                    className="flex-1 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors text-center"
+                                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors text-center ${
+                                        userRole === 'registration' 
+                                            ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50' 
+                                            : 'bg-primary/10 text-primary hover:bg-primary/20'
+                                    }`}
+                                    onClick={(e) => userRole === 'registration' && e.preventDefault()}
+                                    title={userRole === 'registration' ? 'Registration role cannot access registrations' : ''}
                                 >
                                     Registrations
                                 </Link>

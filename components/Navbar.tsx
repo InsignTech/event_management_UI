@@ -2,23 +2,63 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+    
+    if (token) {
+      // Fetch user role
+      const fetchUserRole = async () => {
+        try {
+          const res = await api.get('/auth/me');
+          if (res.data.success) {
+            setUserRole(res.data.data.role);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+        }
+      };
+      fetchUserRole();
+    }
   }, [pathname]);
 
   const isDashboard = pathname.startsWith('/dashboard');
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!userRole) {
+      router.push('/login');
+      return;
+    }
+
+    // Redirect based on role
+    const roleRedirects: { [key: string]: string } = {
+      'super_admin': '/dashboard',
+      'event_admin': '/dashboard',
+      'coordinator': '/events',
+      'registration': '/dashboard/registration',
+      'program_reporting': '/dashboard/reporting',
+      'scoring': '/dashboard/scoring',
+    };
+    
+    const redirectPath = roleRedirects[userRole] || '/login';
+    router.push(redirectPath);
+  };
 
   const baseMenuItems = [
     { name: 'Results', href: '/results' },
@@ -65,9 +105,12 @@ export default function Navbar() {
                     Go to Home
                   </Link>
                 ) : (
-                  <Link href="/dashboard" className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20">
+                  <button 
+                    onClick={handleDashboardClick}
+                    className="bg-primary hover:bg-primary/90 px-6 py-2 rounded-full text-primary-foreground font-black text-sm uppercase transition-all transform hover:scale-105 shadow-lg shadow-primary/20"
+                  >
                     Go to Dashboard
-                  </Link>
+                  </button>
                 )
               )}
             </div>
@@ -108,13 +151,15 @@ export default function Navbar() {
                   Go to Home
                 </Link>
               ) : (
-                <Link 
-                  href="/dashboard" 
-                  onClick={() => setIsOpen(false)}
+                <button 
+                  onClick={(e) => {
+                    handleDashboardClick(e);
+                    setIsOpen(false);
+                  }}
                   className="block w-full text-center bg-primary text-primary-foreground px-4 py-4 rounded-xl font-black uppercase tracking-tighter mt-4"
                 >
                   Go to Dashboard
-                </Link>
+                </button>
               )
             )}
           </div>
