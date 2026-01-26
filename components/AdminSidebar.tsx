@@ -50,27 +50,59 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     };
 
     const links = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    
-        // { name: 'Events', href: '/dashboard/events', icon: CalendarDays },
-        { name: 'Programs', href: '/dashboard/programs', icon: Mic2 },
-        
-        { name: 'Registration', href: '/dashboard/registration', icon: CheckSquare },
-        { name: 'Program Reporting', href: '/dashboard/reporting', icon: FileCheck2 },
-        { name: 'Students', href: '/dashboard/students', icon: Users },
-         { name: 'Colleges', href: '/dashboard/colleges', icon: School },
+        { 
+            name: 'Dashboard', 
+            href: '/dashboard', 
+            icon: LayoutDashboard,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator']
+        },
+        { 
+            name: 'Programs', 
+            href: '/dashboard/programs', 
+            icon: Mic2,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting']
+        },
+        { 
+            name: 'Registration', 
+            href: '/dashboard/registration', 
+            icon: CheckSquare,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration']
+        },
+        { 
+            name: 'Program Reporting', 
+            href: '/dashboard/reporting', 
+            icon: FileCheck2,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'program_reporting']
+        },
+        { 
+            name: 'Students', 
+            href: '/dashboard/students', 
+            icon: Users,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration']
+        },
+        { 
+            name: 'Colleges', 
+            href: '/dashboard/colleges', 
+            icon: School,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting']
+        },
         { 
             name: 'Users', 
             href: '/dashboard/users', 
             icon: UserCog,
-            adminOnly: true 
+            allowedRoles: ['super_admin']
         },
-        { name: 'Scoring', href: '/dashboard/scoring', icon: Trophy },
-      
-        // { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { 
+            name: 'Scoring', 
+            href: '/dashboard/scoring', 
+            icon: Trophy,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'scoring']
+        },
     ];
 
-    const visibleLinks = links.filter(link => !link.adminOnly || userRole === 'super_admin');
+    const visibleLinks = links.filter(link => 
+        !link.allowedRoles || !userRole || link.allowedRoles.includes(userRole)
+    );
 
     return (
         <>

@@ -141,6 +141,12 @@ export default function UserManagementPage() {
                                         ? 'bg-red-500/10 text-red-500 border-red-500/20' 
                                         : user.role === 'event_admin'
                                         ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                        : user.role === 'registration'
+                                        ? 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                                        : user.role === 'program_reporting'
+                                        ? 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                                        : user.role === 'scoring'
+                                        ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
                                         : 'bg-green-500/10 text-green-500 border-green-500/20'
                                 }`}>
                                     {user.role.replace('_', ' ')}
@@ -237,6 +243,9 @@ export default function UserManagementPage() {
                                         <option value="coordinator">Coordinator</option>
                                         <option value="event_admin">Event Admin</option>
                                         <option value="super_admin">Super Admin</option>
+                                        <option value="registration">Registration</option>
+                                        <option value="program_reporting">Program Reporting</option>
+                                        <option value="scoring">Scoring</option>
                                     </select>
                                 </div>
                             </div>
@@ -314,6 +323,9 @@ export default function UserManagementPage() {
                                         <option value="coordinator">Coordinator</option>
                                         <option value="event_admin">Event Admin</option>
                                         <option value="super_admin">Super Admin</option>
+                                        <option value="registration">Registration</option>
+                                        <option value="program_reporting">Program Reporting</option>
+                                        <option value="scoring">Scoring</option>
                                     </select>
                                 </div>
                             </div>

@@ -20,9 +20,25 @@ export default function LoginPage() {
       const res = await api.post('/auth/login', formData);
       if (res.data.success) {
         localStorage.setItem('token', res.data.data.token);
-        // Simple role check logic - in real app, decode token or store user object
-        // assuming response might have user info. For now default to dashboard for admins
-        router.push('/dashboard'); 
+        
+        // Fetch user info to determine role and redirect accordingly
+        const userRes = await api.get('/auth/me');
+        if (userRes.data.success) {
+          const role = userRes.data.data.role;
+          
+          // Redirect based on role
+          const roleRedirects: { [key: string]: string } = {
+            'super_admin': '/dashboard',
+            'event_admin': '/dashboard',
+            'coordinator': '/events',
+            'registration': '/dashboard/registration',
+            'program_reporting': '/dashboard/reporting',
+            'scoring': '/dashboard/scoring',
+          };
+          
+          const redirectPath = roleRedirects[role] || '/login';
+          router.push(redirectPath);
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -90,12 +106,12 @@ export default function LoginPage() {
                 </button>
             </form>
 
-            <div className="mt-8 text-center text-sm text-gray-500">
+            {/* <div className="mt-8 text-center text-sm text-gray-500">
                 Don't have an account?{' '}
                 <Link href="/register" className="text-purple-400 hover:text-purple-300 font-medium">
                     Register here
                 </Link>
-            </div>
+            </div> */}
         </div>
     </div>
   );
