@@ -58,6 +58,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         { name: 'Registration', href: '/dashboard/registration', icon: CheckSquare },
         { name: 'Program Reporting', href: '/dashboard/reporting', icon: FileCheck2 },
         { name: 'Students', href: '/dashboard/students', icon: Users },
+         { name: 'Colleges', href: '/dashboard/colleges', icon: School },
         { 
             name: 'Users', 
             href: '/dashboard/users', 
@@ -65,7 +66,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             adminOnly: true 
         },
         { name: 'Scoring', href: '/dashboard/scoring', icon: Trophy },
-       { name: 'Colleges', href: '/dashboard/colleges', icon: School },
+      
         // { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
 
