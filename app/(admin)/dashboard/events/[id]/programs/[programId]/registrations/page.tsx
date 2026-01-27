@@ -133,7 +133,7 @@ export default function ProgramRegistrationsPage() {
             setLoading(true);
             const statusParam = statusFilter === 'all' ? '' : `&status=${statusFilter}`;
             const collegeParam = collegeIdFilter ? `&collegeId=${collegeIdFilter}` : '';
-            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=50${statusParam}${collegeParam}`);
+            const res = await api.get(`/registrations/program/${programId}?page=${pageNum}&limit=500${statusParam}${collegeParam}`);
             if (res.data.success) {
                 setRegistrations(res.data.registrations || []);
                 setPagination(res.data.pagination || null);
