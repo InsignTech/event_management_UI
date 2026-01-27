@@ -30,7 +30,7 @@ export default function ProgramRegistrationsPage() {
     const { id: eventId, programId } = params;
     const searchParams = useSearchParams();
     const collegeIdFilter = searchParams.get('collegeId');
-    const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration'] });
+    const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
     
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [loading, setLoading] = useState(true);
@@ -45,6 +45,7 @@ export default function ProgramRegistrationsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isReportConfirmOpen, setIsReportConfirmOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
     const [cancellationReason, setCancellationReason] = useState('');
     const [chestNumberInput, setChestNumberInput] = useState('');
@@ -232,6 +233,11 @@ export default function ProgramRegistrationsPage() {
 
     const handleReportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Show confirmation dialog instead of submitting directly
+        setIsReportConfirmOpen(true);
+    };
+
+    const confirmReportSubmit = async () => {
         if (!selectedRegistration || !chestNumberInput) return;
         setIsReporting(true);
         try {
@@ -241,6 +247,7 @@ export default function ProgramRegistrationsPage() {
             if (res.data.success) {
                 showSuccess('Chest number assigned and reported');
                 setIsReportModalOpen(false);
+                setIsReportConfirmOpen(false);
                 setChestNumberInput('');
                 setSelectedRegistration(null);
                 fetchRegistrations();
@@ -519,6 +526,52 @@ export default function ProgramRegistrationsPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Report Confirmation Dialog */}
+            {isReportConfirmOpen && selectedRegistration && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 font-sans text-foreground">
+                    <div className="bg-card border border-border rounded-xl w-full max-w-sm p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-yellow-500/10 rounded-lg">
+                                <AlertCircle className="h-5 w-5 text-yellow-500" />
+                            </div>
+                            <h2 className="text-lg font-bold">Confirm Chest Number Assignment</h2>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground mb-2">
+                            You are about to assign chest number <span className="font-bold text-foreground">"{chestNumberInput}"</span> to:
+                        </p>
+                        <p className="text-sm font-medium text-foreground mb-6 p-3 bg-secondary/50 rounded-lg border border-border">
+                            {selectedRegistration.participants.map(p => p.name || p.registrationCode).join(', ')}
+                        </p>
+
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-6">
+                            <p className="text-xs font-bold text-yellow-600 flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4" />
+                                ⚠️ WARNING: This cannot be changed later!
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button 
+                                type="button"
+                                onClick={() => setIsReportConfirmOpen(false)}
+                                className="flex-1 px-4 py-2 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={confirmReportSubmit}
+                                disabled={isReporting}
+                                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                            >
+                                {isReporting ? 'Submitting...' : 'Yes, Confirm'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
