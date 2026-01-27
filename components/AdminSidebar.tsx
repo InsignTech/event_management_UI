@@ -15,6 +15,7 @@ import {
     LogOut,
     CheckSquare,
     FileCheck2,
+    FileDown,
     X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -97,6 +98,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             href: '/dashboard/scoring', 
             icon: Trophy,
             allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'scoring']
+        },
+        { 
+            name: 'Reports', 
+            href: '/dashboard/reports', 
+            icon: FileDown,
+            allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting']
         },
     ];
 
