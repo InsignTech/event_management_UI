@@ -38,7 +38,16 @@ export function useRoleAccess({ allowedRoles, redirectTo = '/dashboard' }: UseRo
                     if (allowedRoles.includes(role)) {
                         setIsAuthorized(true);
                     } else {
-                        router.push(redirectTo);
+                         const roleRedirects: Record<UserRole, string> = {
+            super_admin: '/dashboard',
+            event_admin: '/dashboard',
+            coordinator: '/events',
+            registration: '/dashboard/registration',
+            program_reporting: '/dashboard/reporting',
+            scoring: '/dashboard/scoring',
+          };
+
+          router.replace(roleRedirects[role] || '/dashboard');
                     }
                 }
             } catch (error) {
