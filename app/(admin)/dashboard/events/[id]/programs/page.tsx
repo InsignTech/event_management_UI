@@ -214,13 +214,13 @@ export default function EventProgramsPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-1">
+                            {/* <div className="space-y-1">
                                 <MultiUserSelect 
                                     label="Program Coordinators (Optional)"
                                     value={newProgram.coordinators}
                                     onChange={ids => setNewProgram({...newProgram, coordinators: ids})}
                                 />
-                            </div>
+                            </div> */}
                             <div className="flex gap-3 mt-6">
                                 <button 
                                     type="button"
@@ -311,14 +311,14 @@ export default function EventProgramsPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-1">
+                            {/* <div className="space-y-1">
                                 <MultiUserSelect 
                                     label="Program Coordinators"
                                     value={currentProgram.coordinators?.map(u => typeof u === 'string' ? u : u._id) || []}
                                     initialData={currentProgram.coordinators || []}
                                     onChange={ids => setCurrentProgram({...currentProgram, coordinators: ids as any})}
                                 />
-                            </div>
+                            </div> */}
                             <div className="flex gap-3 mt-6">
                                 <button 
                                     type="button"
@@ -417,7 +417,11 @@ export default function EventProgramsPage() {
                                     Registrations
                                 </Link>
                                 <button 
-                                    onClick={() => { setCurrentProgram({...program}); setIsEditModalOpen(true); }}
+                                    onClick={() => {  setCurrentProgram({
+      ...program,
+      duration: 0, // 👈 force default to 0 on edit
+    }); 
+     setIsEditModalOpen(true); }}
                                     className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
                                 >
                                     <Edit className="h-4 w-4" />
