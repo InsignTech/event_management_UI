@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { FileDown, FileCheck2, School, Mic2 } from 'lucide-react';
+import { FileDown, FileCheck2, School, Mic2, Users, ReceiptText } from 'lucide-react';
 import api from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -11,6 +11,8 @@ interface Program {
     name: string;
     category: string;
 }
+
+type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct';
 
 export default function ReportsPage() {
     const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
@@ -35,7 +37,7 @@ export default function ReportsPage() {
         }
     };
 
-    const handleExport = async (type: 'college' | 'program') => {
+    const handleExport = async (type: ExportType) => {
         if (type === 'program' && !selectedProgramId) {
             showError('Please select a program first');
             return;
@@ -43,14 +45,28 @@ export default function ReportsPage() {
 
         try {
             setLoading(true);
-            const url = type === 'college' 
-                ? '/exports/college-wise' 
-                : `/exports/program-wise/${selectedProgramId}`;
-            
-            const selectedProgram = programs.find(p => p._id === selectedProgramId);
-            const filename = type === 'college' 
-                ? 'college_wise_registrations.xlsx' 
-                : `${selectedProgram?.name || 'program'}_registrations.xlsx`;
+            let url = '';
+            let filename = '';
+
+            switch (type) {
+                case 'college':
+                    url = '/exports/college-wise';
+                    filename = 'college_wise_registrations.xlsx';
+                    break;
+                case 'program':
+                    url = `/exports/program-wise/${selectedProgramId}`;
+                    const selectedProgram = programs.find(p => p._id === selectedProgramId);
+                    filename = `${selectedProgram?.name || 'program'}_registrations.xlsx`;
+                    break;
+                case 'distinct':
+                    url = '/exports/participants-distinct';
+                    filename = 'college_wise_distinct_participants.xlsx';
+                    break;
+                case 'non-distinct':
+                    url = '/exports/participants-non-distinct';
+                    filename = 'college_wise_total_entries.xlsx';
+                    break;
+            }
             
             const res = await api.get(url, { responseType: 'blob' });
             const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -90,7 +106,7 @@ export default function ReportsPage() {
                     
                     <h2 className="text-2xl font-bold mb-3">College-wise Report</h2>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-8 flex-1">
-                        Download a complete summary of all registrations grouped by college. This include participant names, registration codes, program details, and current status across the entire event.
+                        Download a complete summary of all registrations grouped by college. This include participant names, registration codes, program details, and current status.
                     </p>
 
                     <button 
@@ -144,7 +160,64 @@ export default function ReportsPage() {
                         Export Program-wise Excel
                     </button>
                 </div>
+
+                {/* Distinct Participants Report Card */}
+                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="p-4 bg-emerald-500/10 rounded-2xl group-hover:bg-emerald-500/20 transition-colors">
+                            <Users className="h-8 w-8 text-emerald-500" />
+                        </div>
+                        <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Analytics</span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-3">Distinct Participants</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8 flex-1">
+                        Count unique individuals representing each college. A participant is counted only once regardless of how many programs they are registered for.
+                    </p>
+
+                    <button 
+                        onClick={() => handleExport('distinct')}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown className="h-5 w-5" />
+                        )}
+                        Export Distinct Counts
+                    </button>
+                </div>
+
+                {/* Non-Distinct Participants Report Card */}
+                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="p-4 bg-amber-500/10 rounded-2xl group-hover:bg-amber-500/20 transition-colors">
+                            <ReceiptText className="h-8 w-8 text-amber-500" />
+                        </div>
+                        <span className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Analytics</span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-3">Total Entries</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8 flex-1">
+                        Count all participant entries across all programs. If one participant is registered for 3 programs, they contribute 3 to the total count.
+                    </p>
+
+                    <button 
+                        onClick={() => handleExport('non-distinct')}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-amber-500/20"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown className="h-5 w-5" />
+                        )}
+                        Export Total Entries
+                    </button>
+                </div>
             </div>
+
 
             <div className="bg-secondary/30 border border-border rounded-2xl p-6 mt-8">
                 <div className="flex gap-4">
