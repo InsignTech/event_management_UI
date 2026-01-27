@@ -14,6 +14,7 @@ import api from "@/lib/api";
 import Link from "next/link";
 import { showError, showSuccess } from "@/lib/toast";
 import MultiUserSelect from "@/components/MultiUserSelect";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
 
 interface User {
   _id: string;
@@ -51,6 +52,7 @@ export default function AllProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [defaultEventId, setDefaultEventId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -71,7 +73,19 @@ export default function AllProgramsPage() {
 
   useEffect(() => {
     fetchDefaultEvent();
+    fetchUserRole();
   }, []);
+
+  const fetchUserRole = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      if (res.data.success) {
+        setUserRole(res.data.data.role);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user role", error);
+    }
+  };
 
   useEffect(() => {
     if (defaultEventId) {
@@ -648,12 +662,14 @@ export default function AllProgramsPage() {
                 {/* <p>Duration: {program.duration} mins</p> */}
               </div>
               <div className="flex gap-2 pt-4 border-t border-border">
-                <Link
-                  href={`/dashboard/events/${defaultEventId}/programs/${program._id}/registrations`}
-                  className="flex-1 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors text-center"
-                >
-                  {program.isCancelled ? "View Participants" : "Registrations"}
-                </Link>
+                {userRole !== "registration" && (
+                  <Link
+                    href={`/dashboard/events/${defaultEventId}/programs/${program._id}/registrations`}
+                    className="flex-1 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors text-center"
+                  >
+                    {program.isCancelled ? "View Participants" : "Registrations"}
+                  </Link>
+                )}
                 {!program.isCancelled && (
                   <>
                     <button
