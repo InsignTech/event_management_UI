@@ -35,6 +35,17 @@ interface Program {
   cancellationReason?: string;
 }
 
+const toLocalDateTimeInput = (dateString: string) => {
+  const date = new Date(dateString);
+
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+
 export default function AllProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
@@ -363,6 +374,7 @@ export default function AllProgramsPage() {
                   Program Name
                 </label>
                 <input
+                disabled
                   required
                   className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                   value={currentProgram.name}
@@ -378,6 +390,7 @@ export default function AllProgramsPage() {
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Type</label>
                   <select
+                  disabled
                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                     value={currentProgram.type}
                     onChange={(e) =>
@@ -396,6 +409,7 @@ export default function AllProgramsPage() {
                     Category
                   </label>
                   <select
+                  disabled
                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                     value={currentProgram.category}
                     onChange={(e) =>
@@ -433,9 +447,7 @@ export default function AllProgramsPage() {
                     required
                     type="datetime-local"
                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                    value={new Date(currentProgram.startTime)
-                      .toISOString()
-                      .slice(0, 16)}
+                    value={toLocalDateTimeInput(currentProgram.startTime)}
                     onChange={(e) =>
                       setCurrentProgram({
                         ...currentProgram,

@@ -25,6 +25,17 @@ interface Program {
     coordinators?: User[];
 }
 
+const toLocalDateTimeInput = (dateString: string) => {
+  const date = new Date(dateString);
+
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+
 export default function EventProgramsPage() {
     const params = useParams();
     const eventId = params.id;
@@ -250,6 +261,7 @@ export default function EventProgramsPage() {
                             <div className="space-y-1">
                                 <label className="text-xs text-muted-foreground">Program Name</label>
                                 <input 
+                                disabled
                                     required
                                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                     value={currentProgram.name}
@@ -260,6 +272,7 @@ export default function EventProgramsPage() {
                                 <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground">Type</label>
                                     <select 
+                                    disabled
                                         className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                         value={currentProgram.type}
                                         onChange={e => setCurrentProgram({...currentProgram, type: e.target.value as any})}
@@ -271,6 +284,7 @@ export default function EventProgramsPage() {
                                 <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground">Category</label>
                                     <select 
+                                    disabled
                                         className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                                         value={currentProgram.category}
                                         onChange={e => setCurrentProgram({...currentProgram, category: e.target.value as any})}
@@ -296,7 +310,7 @@ export default function EventProgramsPage() {
                                         required
                                         type="datetime-local"
                                         className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                                        value={new Date(currentProgram.startTime).toISOString().slice(0, 16)}
+                                        value={toLocalDateTimeInput(currentProgram.startTime)}
                                         onChange={e => setCurrentProgram({...currentProgram, startTime: e.target.value})}
                                     />
                                 </div>
