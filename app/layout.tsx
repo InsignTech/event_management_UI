@@ -19,9 +19,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/Mes-youth-fest-2.png',
-        width: 32,
-        height: 32,
+        url: 'https://mesyouthfest.org/Mes-youth-fest-2.png',
         alt: 'MES Youth Fest',
       },
     ],
@@ -32,7 +30,7 @@ export const metadata: Metadata = {
     title: 'MES Youth Fest',
     description: 'Join the biggest inter-college event management platform.',
     images: [
-      '/Mes-youth-fest-2.png',
+      'https://mesyouthfest.org/Mes-youth-fest-2.png',
     ],
   },
 };
