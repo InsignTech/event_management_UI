@@ -1,4 +1,6 @@
 import { toast } from 'react-hot-toast';
+export { toast };
+
 
 export const getErrorMessage = (error: any): string => {
     const data = error.response?.data;
