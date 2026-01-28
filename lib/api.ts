@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://mes-event-backend-etahh7b4dxc0dwen.centralindia-01.azurewebsites.net/api',
-    //baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+   // baseURL: 'https://mes-event-backend-etahh7b4dxc0dwen.centralindia-01.azurewebsites.net/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
     headers: {
         'Content-Type': 'application/json',
     },

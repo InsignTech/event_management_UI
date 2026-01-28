@@ -7,10 +7,11 @@ import {
     Calendar,
     ArrowRight,
     Search,
-    ListFilter
+    ListFilter,
+    CheckCircle2
 } from 'lucide-react';
 import api from '@/lib/api';
-import { showError } from '@/lib/toast';
+import { showError, showSuccess } from '@/lib/toast';
 import Link from 'next/link';
 
 interface Program {
@@ -20,6 +21,7 @@ interface Program {
     type: string;
     startTime?: string;
     venue?: string;
+    collegeStatus?: string;
 }
 
 export default function CollegeProgramsPage() {
@@ -30,6 +32,7 @@ export default function CollegeProgramsPage() {
     const [college, setCollege] = useState<{name: string} | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isConfirming, setIsConfirming] = useState(false);
 
     useEffect(() => {
         if (collegeId) {
@@ -63,6 +66,23 @@ export default function CollegeProgramsPage() {
         }
     };
 
+    const handleConfirmAll = async () => {
+        if (!window.confirm("Are you sure you want to confirm ALL open registrations for this college?")) return;
+        
+        setIsConfirming(true);
+        try {
+            const res = await api.post(`/registrations/college/${collegeId}/confirm-all`);
+            if (res.data.success) {
+                showSuccess(res.data.message || "All registrations confirmed successfully");
+                fetchPrograms(); // Refresh the list to show updated statuses
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+
     const filteredPrograms = programs.filter(p => 
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -85,15 +105,30 @@ export default function CollegeProgramsPage() {
                         <p className="text-sm text-muted-foreground mt-1">Select a program to manage its registrations</p>
                     </div>
 
-                    <div className="flex items-center px-4 py-2 bg-card border border-border rounded-xl w-full sm:max-w-xs shadow-sm focus-within:border-primary/50 transition-all">
-                        <Search className="h-4 w-4 text-muted-foreground mr-3" />
-                        <input 
-                            type="text" 
-                            placeholder="Search programs..." 
-                            className="bg-transparent border-none outline-none text-sm w-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                        <button
+                            onClick={handleConfirmAll}
+                            disabled={isConfirming || programs.length === 0}
+                            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:text-muted-foreground text-white rounded-xl font-bold text-sm shadow-lg shadow-green-900/20 transition-all active:scale-95"
+                        >
+                            {isConfirming ? (
+                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <CheckCircle2 className="h-4 w-4" />
+                            )}
+                            CONFIRM ALL
+                        </button>
+
+                        <div className="flex items-center px-4 py-2 bg-card border border-border rounded-xl w-full sm:max-w-xs shadow-sm focus-within:border-primary/50 transition-all">
+                            <Search className="h-4 w-4 text-muted-foreground mr-3" />
+                            <input 
+                                type="text" 
+                                placeholder="Search programs..." 
+                                className="bg-transparent border-none outline-none text-sm w-full"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -123,10 +158,29 @@ export default function CollegeProgramsPage() {
                             
                             <div>
                                 <div className="flex flex-col gap-1 mb-4">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 w-fit px-2 py-0.5 rounded">
-                                        {program.category}
-                                    </span>
-                                    <h3 className="font-black text-xl leading-tight group-hover:text-primary transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 w-fit px-2 py-0.5 rounded">
+                                            {program.category}
+                                        </span>
+                                        {program.collegeStatus && (
+                                            <div className={`px-2 py-0.5 rounded text-[9px] font-black border uppercase tracking-[0.05em] ${
+                                                program.collegeStatus === 'open' 
+                                                    ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' 
+                                                    : program.collegeStatus === 'confirmed'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                                    : program.collegeStatus === 'reported'
+                                                    ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                                                    : program.collegeStatus === 'participated'
+                                                    ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
+                                                    : program.collegeStatus === 'completed'
+                                                    ? 'bg-purple-500/10 text-purple-600 border-purple-500/20'
+                                                    : 'bg-red-500/10 text-red-600 border-red-500/20'
+                                            }`}>
+                                                {program.collegeStatus}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="font-black text-xl leading-tight group-hover:text-primary transition-colors mt-2">
                                         {program.name}
                                     </h3>
                                 </div>
