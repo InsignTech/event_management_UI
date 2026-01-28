@@ -47,6 +47,8 @@ export function useRoleAccess({ allowedRoles, redirectTo = '/dashboard' }: UseRo
             scoring: '/dashboard/scoring',
           };
 
+
+          
           router.replace(roleRedirects[role] || '/dashboard');
                     }
                 }
