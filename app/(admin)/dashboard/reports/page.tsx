@@ -18,7 +18,20 @@ export default function ReportsPage() {
     const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
     const [programs, setPrograms] = useState<Program[]>([]);
     const [selectedProgramId, setSelectedProgramId] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState('all');
     const [loading, setLoading] = useState(false);
+
+    const statuses = [
+        { value: 'all', label: 'All Statuses' },
+        { value: 'open', label: 'Open' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'reported', label: 'Reported' },
+        { value: 'participated', label: 'Participated' },
+        // { value: 'absent', label: 'Absent' },
+        // { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' },
+        // { value: 'rejected', label: 'Rejected' },
+    ];
 
     useEffect(() => {
         if (userRole) {
@@ -48,27 +61,33 @@ export default function ReportsPage() {
             let url = '';
             let filename = '';
 
+            const params = new URLSearchParams();
+            if (selectedStatus !== 'all') {
+                params.append('status', selectedStatus);
+            }
+
             switch (type) {
                 case 'college':
-                    url = '/exports/college-wise';
-                    filename = 'college_wise_registrations.xlsx';
+                    url = `/exports/college-wise?${params.toString()}`;
+                    filename = `college_wise_registrations_${selectedStatus}.xlsx`;
                     break;
                 case 'program':
-                    url = `/exports/program-wise/${selectedProgramId}`;
+                    url = `/exports/program-wise/${selectedProgramId}?${params.toString()}`;
                     const selectedProgram = programs.find(p => p._id === selectedProgramId);
-                    filename = `${selectedProgram?.name || 'program'}_registrations.xlsx`;
+                    filename = `${selectedProgram?.name || 'program'}_registrations_${selectedStatus}.xlsx`;
                     break;
                 case 'distinct':
-                    url = '/exports/participants-distinct';
-                    filename = 'college_wise_distinct_participants.xlsx';
+                    url = `/exports/participants-distinct?${params.toString()}`;
+                    filename = `college_wise_distinct_participants_${selectedStatus}.xlsx`;
                     break;
                 case 'non-distinct':
-                    url = '/exports/participants-non-distinct';
-                    filename = 'college_wise_total_entries.xlsx';
+                    url = `/exports/participants-non-distinct?${params.toString()}`;
+                    filename = `college_wise_total_entries_${selectedStatus}.xlsx`;
                     break;
             }
             
             const res = await api.get(url, { responseType: 'blob' });
+
             const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
@@ -92,6 +111,32 @@ export default function ReportsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Reports & Exports</h1>
                 </div>
                 <p className="text-muted-foreground ml-13">Generate and download comprehensive registration data in Excel format.</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-card border border-border p-6 rounded-3xl shadow-sm">
+                <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Report Filters</h3>
+                    <p className="text-xs text-muted-foreground">Select a status to filter all reports below.</p>
+                </div>
+                <div className="w-full md:w-64">
+                    <label className="text-xs font-bold mb-1.5 block">Registration Status</label>
+                    <div className="relative">
+                        <select 
+                            value={selectedStatus} 
+                            onChange={(e) => setSelectedStatus(e.target.value)}
+                            className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                        >
+                            {statuses.map(s => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
