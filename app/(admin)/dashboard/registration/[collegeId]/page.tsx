@@ -153,7 +153,7 @@ export default function CollegeProgramsPage() {
                             className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all group relative overflow-hidden flex flex-col justify-between"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Mic2 className="h-12 w-12" />
+                                {/* <Mic2 className="h-12 w-12" /> */}
                             </div>
                             
                             <div>
