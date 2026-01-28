@@ -11,7 +11,8 @@ import {
     Users,
     ClipboardCheck,
     Ban,
-    Edit
+    Edit,
+    X
 } from 'lucide-react';
 import api from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
@@ -498,10 +499,16 @@ export default function ProgramRegistrationsPage() {
                             <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
                                 <Plus className="h-7 w-7 text-primary" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <h2 className="text-2xl font-black tracking-tight">{selectedRegistration ? 'Edit Registration' : 'New Registration'}</h2>
                                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">{program?.name} • {college?.name}</p>
                             </div>
+                            <button 
+                                onClick={() => { setIsNewModalOpen(false); setSelectedStudents([]); setSelectedRegistration(null); }}
+                                className="p-2 hover:bg-secondary rounded-xl transition-colors text-muted-foreground"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
                         </div>
 
                         <form onSubmit={handleNewRegistration} className="space-y-6">
@@ -525,14 +532,50 @@ export default function ProgramRegistrationsPage() {
                             {/* Students Selection */}
                             <div className="space-y-4">
                                 <MultiSearchableSelect 
-                                    label="Select Participants"
-                                    options={allStudents.map(s => ({ ...s, name: s.name || 'Unknown' }))}
+                                    label="Search and Add Participants"
+                                    options={[
+                                        ...allStudents,
+                                        ...(selectedRegistration?.participants.filter(p => !allStudents.find(s => s._id === p._id)) || [])
+                                    ].map(s => ({ ...s, name: s.name || 'Unknown' }))}
                                     value={selectedStudents}
                                     onChange={setSelectedStudents}
                                     onSearch={fetchStudents}
                                     loading={isSearchingStudents}
                                     placeholder="Search for students by name or code..."
                                 />
+
+                                {/* Dedicated Selected List */}
+                                {selectedStudents.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Selected Participants ({selectedStudents.length})</h3>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {selectedStudents.map(id => {
+                                                const student = allStudents.find(s => s._id === id) || 
+                                                              selectedRegistration?.participants.find(p => p._id === id);
+                                                return (
+                                                    <div key={id} className="flex items-center justify-between bg-card border border-border/50 p-3 rounded-2xl group hover:border-primary/30 transition-all">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                                <UserCheck className="h-4 w-4 text-primary" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold">{student?.name || 'Loading...'}</p>
+                                                                <p className="text-[10px] text-muted-foreground font-mono">{student?.registrationCode}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setSelectedStudents(prev => prev.filter(v => v !== id))}
+                                                            className="p-1.5 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
