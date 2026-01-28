@@ -7,12 +7,36 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'MES Youth Fest ',
+  title: 'MES Youth Fest',
   description: 'Join the biggest inter-college event management platform.',
   icons: {
     icon: '/cropped-c1494ae0-e4e0-4f74-bfdc-a1f41d30c62e_removalai_preview-32x32.png',
   },
+
+  openGraph: {
+    title: 'MES Youth Fest',
+    description: 'Join the biggest inter-college event management platform.',
+    type: 'website',
+    images: [
+      {
+        url: '/Mes-youth-fest-2.png',
+        width: 32,
+        height: 32,
+        alt: 'MES Youth Fest',
+      },
+    ],
+  },
+
+  twitter: {
+    card: 'summary',
+    title: 'MES Youth Fest',
+    description: 'Join the biggest inter-college event management platform.',
+    images: [
+      '/Mes-youth-fest-2.png',
+    ],
+  },
 };
+
 
 export default function RootLayout({
   children,
