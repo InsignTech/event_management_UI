@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { FileDown, FileCheck2, School, Mic2, Users, ReceiptText } from 'lucide-react';
+import { FileDown, FileCheck2, School, Mic2, Users, ReceiptText, Trophy } from 'lucide-react';
+
 import api from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -12,13 +13,14 @@ interface Program {
     category: string;
 }
 
-type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct';
+type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct' | 'student-ranking';
 
 export default function ReportsPage() {
     const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
     const [programs, setPrograms] = useState<Program[]>([]);
     const [selectedProgramId, setSelectedProgramId] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedGender, setSelectedGender] = useState('all');
     const [loading, setLoading] = useState(false);
 
     const statuses = [
@@ -32,6 +34,13 @@ export default function ReportsPage() {
         { value: 'cancelled', label: 'Cancelled' },
         // { value: 'rejected', label: 'Rejected' },
     ];
+
+    const genders = [
+        { value: 'all', label: 'All Genders' },
+        { value: 'male', label: 'Male' },
+        { value: 'female', label: 'Female' },
+    ];
+
 
     useEffect(() => {
         if (userRole) {
@@ -65,6 +74,9 @@ export default function ReportsPage() {
             if (selectedStatus !== 'all') {
                 params.append('status', selectedStatus);
             }
+            if (selectedGender !== 'all') {
+                params.append('gender', selectedGender);
+            }
 
             switch (type) {
                 case 'college':
@@ -84,7 +96,12 @@ export default function ReportsPage() {
                     url = `/exports/participants-non-distinct?${params.toString()}`;
                     filename = `college_wise_total_entries_${selectedStatus}.xlsx`;
                     break;
+                case 'student-ranking':
+                    url = `/exports/student-ranking?${params.toString()}`;
+                    filename = `student_individual_ranking_${selectedGender}.xlsx`;
+                    break;
             }
+
             
             const res = await api.get(url, { responseType: 'blob' });
 
@@ -116,30 +133,79 @@ export default function ReportsPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-card border border-border p-6 rounded-3xl shadow-sm">
                 <div className="space-y-1">
                     <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Report Filters</h3>
-                    <p className="text-xs text-muted-foreground">Select a status to filter all reports below.</p>
+                    <p className="text-xs text-muted-foreground">Apply filters to refine your data exports.</p>
                 </div>
-                <div className="w-full md:w-64">
-                    <label className="text-xs font-bold mb-1.5 block">Registration Status</label>
-                    <div className="relative">
-                        <select 
-                            value={selectedStatus} 
-                            onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                        >
-                            {statuses.map(s => (
-                                <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                            </svg>
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <div className="w-full md:w-48">
+                        <label className="text-xs font-bold mb-1.5 block">Registration Status</label>
+                        <div className="relative">
+                            <select 
+                                value={selectedStatus} 
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                            >
+                                {statuses.map(s => (
+                                    <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full md:w-48">
+                        <label className="text-xs font-bold mb-1.5 block">Gender Filter</label>
+                        <div className="relative">
+                            <select 
+                                value={selectedGender} 
+                                onChange={(e) => setSelectedGender(e.target.value)}
+                                className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                            >
+                                {genders.map(g => (
+                                    <option key={g.value} value={g.value}>{g.label}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Student Ranking Card */}
+                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group lg:col-span-3 border-primary/10 bg-primary/5">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="p-4 bg-primary/10 rounded-2xl group-hover:bg-primary/20 transition-colors">
+                            <Trophy className="h-8 w-8 text-primary" />
+                        </div>
+                        <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest italic">Rankings Report</span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-3">Individual Student Ranking</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                        Generate a comprehensive ranking for the <strong>Individual Champion (Kalathilakam/Kalaprathibha)</strong>. This report only includes <strong>Single Programs</strong> and ignores group items. Points are calculated as: 1st (5pts), 2nd (3pts), and 3rd (1pt).
+                    </p>
+
+                    <button 
+                        onClick={() => handleExport('student-ranking')}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-primary/20"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown className="h-5 w-5" />
+                        )}
+                        Export Student Ranking Excel
+                    </button>
+                </div>
                 {/* College-wise Report Card */}
                 <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group">
                     <div className="flex items-start justify-between mb-6">
