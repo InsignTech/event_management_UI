@@ -118,7 +118,7 @@ export default function LeaderboardPage() {
                                                 <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-slate-300 to-slate-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-black border-2 border-[#0f172a]">{topThree[0].rank}</div>
                                             </div>
                                             <div className="text-center px-2">
-                                                <h3 className="text-xl font-black mb-1 line-clamp-1 text-slate-200">{topThree[0].name}</h3>
+                                                <h3 className="text-xl font-black mb-1 text-slate-200">{topThree[0].name}</h3>
                                                 <p className="text-slate-400 font-extrabold text-2xl">{topThree[0].points} <span className="text-xs uppercase font-bold text-slate-600">PTS</span></p>
                                             </div>
                                         </>
@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
                                                 <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-amber-600 to-amber-800 text-amber-100 w-8 h-8 rounded-full flex items-center justify-center font-black border-2 border-[#0f172a]">{topThree[2].rank}</div>
                                             </div>
                                             <div className="text-center px-2">
-                                                <h3 className="text-xl font-black mb-1 line-clamp-1 text-slate-200">{topThree[2].name}</h3>
+                                                <h3 className="text-xl font-black mb-1 text-slate-200">{topThree[2].name}</h3>
                                                 <p className="text-slate-400 font-extrabold text-2xl">{topThree[2].points} <span className="text-xs uppercase font-bold text-slate-600">PTS</span></p>
                                             </div>
                                         </>
