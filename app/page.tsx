@@ -66,9 +66,10 @@ export default function Home() {
   }, []);
 
   const groupedPrograms = schedule.reduce((acc: any, program) => {
-    const date = new Date(program.startTime).toLocaleDateString('en-US', {
+    const date = new Date(program.startTime).toLocaleDateString('en-IN', {
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: 'Asia/Kolkata'
     });
     if (!acc[date]) acc[date] = [];
     acc[date].push(program);
@@ -261,7 +262,7 @@ export default function Home() {
                                             <CategoryBadge category={event.category} />
                                              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-black/20 px-2 py-1 rounded-md">
                                                 <Clock className="w-3 h-3" />
-                                                {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                                             </div>
                                         </div>
 

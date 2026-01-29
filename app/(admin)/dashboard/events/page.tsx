@@ -310,8 +310,8 @@ export default function EventsPage() {
                             <h3 className="text-xl font-bold mb-2 truncate">{event.name}</h3>
                             <p className="text-muted-foreground text-sm mb-4 truncate">{event.venue}</p>
                             <div className="text-xs text-muted-foreground space-y-1 mb-4">
-                                <p>Start: {new Date(event.startDate).toLocaleDateString()}</p>
-                                <p>End: {new Date(event.endDate).toLocaleDateString()}</p>
+                                <p>Start: {new Date(event.startDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                                <p>End: {new Date(event.endDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                             </div>
                             <div className="flex gap-2 pt-4 border-t border-border">
                                 <Link 

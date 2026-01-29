@@ -660,7 +660,7 @@ export default function AllProgramsPage() {
               )}
 
               <div className="text-xs text-muted-foreground space-y-1 mb-4">
-                <p>Start: {new Date(program.startTime).toLocaleString()}</p>
+                <p>Start: {new Date(program.startTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                 {/* <p>Duration: {program.duration} mins</p> */}
               </div>
               <div className="flex gap-2 pt-4 border-t border-border">

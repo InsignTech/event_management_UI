@@ -39,10 +39,11 @@ export default function SchedulePage() {
 
     // Group by Date
     const groupedPrograms = schedule.reduce((acc: any, program) => {
-        const date = new Date(program.startTime).toLocaleDateString('en-US', {
+        const date = new Date(program.startTime).toLocaleDateString('en-IN', {
             weekday: 'long',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
+            timeZone: 'Asia/Kolkata'
         });
         if (!acc[date]) acc[date] = [];
         acc[date].push(program);
@@ -91,7 +92,7 @@ export default function SchedulePage() {
                                                     <div className="flex items-center gap-2 mb-1 text-[10px] md:text-xs font-black uppercase tracking-wider text-muted-foreground/60">
                                                         <Clock className="h-2.5 w-2.5 md:h-3 w-3 text-primary" />
                                                         <span>
-                                                            {new Date(program.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            {new Date(program.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                                                             <span className="mx-1.5 opacity-30">|</span>
                                                             {program.duration}m
                                                         </span>
