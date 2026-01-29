@@ -78,7 +78,13 @@ export default function EventProgramsPage() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await api.post('/programs', { ...newProgram, event: eventId });
+            // Convert local time string to proper Date object/ISO string so backend gets UTC
+            const submitData = {
+                ...newProgram,
+                startTime: new Date(newProgram.startTime).toISOString(),
+                event: eventId
+            };
+            const res = await api.post('/programs', submitData);
             if (res.data.success) {
                 showSuccess('Program created successfully');
                 setIsModalOpen(false);
@@ -105,6 +111,7 @@ export default function EventProgramsPage() {
             // Map coordinators to IDs only before sending to backend
             const updateData = {
                 ...currentProgram,
+                startTime: new Date(currentProgram.startTime).toISOString(),
                 coordinators: currentProgram.coordinators?.map(u => typeof u === 'string' ? u : u._id)
             };
             const res = await api.put(`/programs/${currentProgram._id}`, updateData);

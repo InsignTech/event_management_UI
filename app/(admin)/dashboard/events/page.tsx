@@ -52,7 +52,12 @@ export default function EventsPage() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await api.post('/events', newEvent);
+            const submitData = {
+                ...newEvent,
+                startDate: new Date(newEvent.startDate).toISOString(),
+                endDate: new Date(newEvent.endDate).toISOString(),
+            };
+            const res = await api.post('/events', submitData);
             if (res.data.success) {
                 showSuccess('Event created successfully');
                 setIsModalOpen(false);
@@ -74,7 +79,12 @@ export default function EventsPage() {
         e.preventDefault();
         if (!currentEvent) return;
         try {
-            const res = await api.put(`/events/${currentEvent._id}`, currentEvent);
+            const updateData = {
+                ...currentEvent,
+                startDate: new Date(currentEvent.startDate).toISOString(),
+                endDate: new Date(currentEvent.endDate).toISOString(),
+            };
+            const res = await api.put(`/events/${currentEvent._id}`, updateData);
             if (res.data.success) {
                 showSuccess('Event updated successfully');
                 setIsEditModalOpen(false);

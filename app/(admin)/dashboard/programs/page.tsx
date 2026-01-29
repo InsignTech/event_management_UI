@@ -131,6 +131,7 @@ export default function AllProgramsPage() {
     try {
       const res = await api.post("/programs", {
         ...newProgram,
+        startTime: new Date(newProgram.startTime).toISOString(),
         event: defaultEventId,
       });
       if (res.data.success) {
@@ -159,6 +160,7 @@ export default function AllProgramsPage() {
       // Map coordinators to IDs only before sending to backend
       const updateData = {
         ...currentProgram,
+        startTime: new Date(currentProgram.startTime).toISOString(),
         coordinators: currentProgram.coordinators?.map((u) =>
           typeof u === "string" ? u : u._id,
         ),
