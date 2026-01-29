@@ -9,6 +9,8 @@ import {
   Tv,
   Users,
   Calendar,
+  Bell,
+  MessageSquare,
 } from "lucide-react";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -188,6 +190,19 @@ export default function AllProgramsPage() {
         setIsCancelModalOpen(false);
         setCancellationReason("");
         fetchPrograms(defaultEventId);
+      }
+    } catch (error) {
+      showError(error);
+    }
+  };
+
+  const handleSendReminder = async (program: Program) => {
+    if (!confirm(`Are you sure you want to send WhatsApp reminders to all participants and coordinators of "${program.name}"?`)) return;
+    
+    try {
+      const res = await api.post(`/programs/${program._id}/reminder`);
+      if (res.data.success) {
+        showSuccess(res.data.message || "Reminders sent successfully");
       }
     } catch (error) {
       showError(error);
@@ -697,6 +712,15 @@ export default function AllProgramsPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                    {!program.isCancelled && new Date(program.startTime) > new Date() && userRole === 'super_admin' && (
+                      <button
+                        onClick={() => handleSendReminder(program)}
+                        className="p-2 text-muted-foreground hover:text-green-500 hover:bg-green-500/10 rounded-lg transition-colors"
+                        title="Send WhatsApp Reminder"
+                      >
+                        <Bell className="h-4 w-4" />
+                      </button>
+                    )}
                   </>
                 )}
               </div>
