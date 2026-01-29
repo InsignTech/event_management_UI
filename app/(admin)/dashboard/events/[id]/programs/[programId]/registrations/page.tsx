@@ -286,7 +286,8 @@ export default function ProgramRegistrationsPage() {
         (r.chestNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         r.participants.some(p => 
             p.registrationCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.name?.toLowerCase().includes(searchTerm.toLowerCase())
+            p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.college.name?.toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
 
@@ -581,7 +582,7 @@ export default function ProgramRegistrationsPage() {
                     <Search className="h-4 w-4 text-muted-foreground mr-2" />
                     <input 
                         type="text" 
-                        placeholder="Search by Chest No, Name or Reg No..." 
+                        placeholder="Search by Chest No, Name, Reg No or College..." 
                         className="bg-transparent border-none outline-none text-sm w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
