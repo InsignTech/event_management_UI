@@ -13,7 +13,7 @@ interface Program {
     category: string;
 }
 
-type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct' | 'student-ranking';
+type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct' | 'student-ranking' | 'college-leaderboard';
 
 export default function ReportsPage() {
     const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
@@ -99,6 +99,10 @@ export default function ReportsPage() {
                 case 'student-ranking':
                     url = `/exports/student-ranking?${params.toString()}`;
                     filename = `student_individual_ranking_${selectedGender}.xlsx`;
+                    break;
+                case 'college-leaderboard':
+                    url = `/exports/college-leaderboard`;
+                    filename = `overall_college_leaderboard.xlsx`;
                     break;
             }
 
@@ -204,6 +208,34 @@ export default function ReportsPage() {
                             <FileDown className="h-5 w-5" />
                         )}
                         Export Student Ranking Excel
+                    </button>
+                </div>
+
+                {/* College Leaderboard Card */}
+                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group lg:col-span-3 border-orange-500/10 bg-orange-500/5">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="p-4 bg-orange-500/10 rounded-2xl group-hover:bg-orange-500/20 transition-colors">
+                            <Trophy className="h-8 w-8 text-orange-500" />
+                        </div>
+                        <span className="bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest italic">Standings Report</span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-3">Overall College Leaderboard</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                        Generate the complete overall standings for all participating colleges. This matches the data shown on the public leaderboard page. Points are aggregated from all published program results.
+                    </p>
+
+                    <button 
+                        onClick={() => handleExport('college-leaderboard')}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-orange-500/20"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown className="h-5 w-5" />
+                        )}
+                        Export Overall Leaderboard Excel
                     </button>
                 </div>
                 {/* College-wise Report Card */}
