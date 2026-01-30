@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, User as UserIcon } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, User as UserIcon, Trophy } from 'lucide-react';
 import api from '@/lib/api';
 import SearchableSelect from '@/components/SearchableSelect';
 import { showError, showSuccess } from '@/lib/toast';
@@ -49,6 +49,12 @@ export default function StudentsPage() {
     // Success Modal State
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [addedStudent, setAddedStudent] = useState<Student | null>(null);
+
+    // Achievements Modal State
+    const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState(false);
+    const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+    const [achievements, setAchievements] = useState<any[]>([]);
+    const [achievementsLoading, setAchievementsLoading] = useState(false);
 
     useEffect(() => {
         fetchColleges();
@@ -158,6 +164,22 @@ export default function StudentsPage() {
             }
         } catch (error) {
             showError(error);
+        }
+    };
+
+    const handleViewAchievements = async (student: Student) => {
+        setViewingStudent(student);
+        setIsAchievementsModalOpen(true);
+        setAchievementsLoading(true);
+        try {
+            const res = await api.get(`/students/${student._id}/achievements`);
+            if (res.data.success) {
+                setAchievements(res.data.data);
+            }
+        } catch (error) {
+            showError(error);
+        } finally {
+            setAchievementsLoading(false);
         }
     };
 
@@ -423,6 +445,67 @@ export default function StudentsPage() {
                 </div>
             )}
 
+            {/* Achievements Modal */}
+            {isAchievementsModalOpen && viewingStudent && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans text-foreground">
+                    <div className="bg-card border-2 border-primary/50 rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-500 via-orange-500 to-primary"></div>
+
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-primary/10 rounded-2xl">
+                                <Trophy className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black tracking-tight">{viewingStudent.name}'s Wins</h2>
+                                <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Top 3 Rankings</p>
+                            </div>
+                        </div>
+
+                        {achievementsLoading ? (
+                            <div className="flex justify-center py-12">
+                                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                            </div>
+                        ) : achievements.length === 0 ? (
+                            <div className="text-center py-12 border border-dashed border-border rounded-2xl">
+                                <Trophy className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                                <p className="text-muted-foreground text-sm">No wins yet. Keep participating!</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 mb-6">
+                                {achievements.map((achievement, idx) => (
+                                    <div key={idx} className="bg-secondary/50 p-4 rounded-2xl border border-border/50 hover:border-primary/30 transition-all">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm mb-1 truncate">{achievement.programName}</p>
+                                                <p className="text-xs text-muted-foreground uppercase tracking-wide">{achievement.category}</p>
+                                            </div>
+                                            <div className={`px-3 py-1.5 rounded-full text-xs font-black ${
+                                                achievement.rank === 1 ? 'bg-yellow-500/20 text-yellow-500' :
+                                                achievement.rank === 2 ? 'bg-slate-400/20 text-slate-300' :
+                                                'bg-amber-700/20 text-amber-600'
+                                            }`}>
+                                                {achievement.rank === 1 ? '🥇 1st' : achievement.rank === 2 ? '🥈 2nd' : '🥉 3rd'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => {
+                                setIsAchievementsModalOpen(false);
+                                setViewingStudent(null);
+                                setAchievements([]);
+                            }}
+                            className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl text-xs font-black transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
+                        >
+                            CLOSE
+                        </button>
+                    </div>
+                </div>
+            )}
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="w-full">
@@ -488,13 +571,20 @@ export default function StudentsPage() {
                                         <td className="px-6 py-4 text-muted-foreground">{student.college?.name}</td>
                                         <td className="px-6 py-4 capitalize">{student.gender}</td>
                                         <td className="px-6 py-4 text-right space-x-2">
-                                            <button 
+                                            <button
+                                                onClick={() => handleViewAchievements(student)}
+                                                className="p-2 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-all"
+                                                title="View Wins"
+                                            >
+                                                <Trophy className="h-4 w-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => { setCurrentStudent({...student}); setIsEditModalOpen(true); }}
                                                 className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-all"
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDelete(student._id)}
                                                 className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-all"
                                             >
