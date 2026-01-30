@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { Toaster } from 'react-hot-toast';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -43,6 +44,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-T3Y5RV3Z9P"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-T3Y5RV3Z9P');
+          `}
+        </Script>
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <Toaster position="top-right" />
         <Navbar />
