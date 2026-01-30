@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
             
-            <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+            <main className="pt-12 sm:pt-16 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
                 <div className="text-center mb-8 md:mb-16 px-2">
                     <h1 className="text-2xl sm:text-4xl md:text-7xl font-black uppercase tracking-tighter mb-3 leading-tight">
                         Points <span className="text-primary italic">Table</span>
@@ -95,10 +95,10 @@ export default function LeaderboardPage() {
                         <p className="text-muted-foreground">No points recorded yet. Stay tuned!</p>
                     </div>
                 ) : (
-                    <div className="space-y-12">
+                    <div className="space-y-8 md:space-y-10">
                         {/* Top 3 Podium - Only render if we have at least one item to show */}
                         {renderedInPodium.length > 0 && (
-                            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 items-end pb-12 border-b border-white/10 isolate max-w-full px-4 pt-16">
+                            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 items-end pb-4 md:pb-12 border-b border-white/10 isolate max-w-full px-4 pt-16">
                                 {/* Ambient Glow */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[500px] h-[300px] bg-primary/20 blur-[100px] -z-10 rounded-full opacity-50 md:opacity-100" />
                                 
