@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { FileDown, FileCheck2, School, Mic2, Users, ReceiptText, Trophy } from 'lucide-react';
+import { FileDown, FileCheck2, School, Mic2, Users, ReceiptText, Trophy, Check } from 'lucide-react';
 
 import api from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
@@ -13,13 +13,14 @@ interface Program {
     category: string;
 }
 
-type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct' | 'student-ranking' | 'college-leaderboard';
+type ExportType = 'college' | 'program' | 'distinct' | 'non-distinct' | 'student-ranking' | 'college-leaderboard' | 'participated-list';
 
 export default function ReportsPage() {
     const { userRole } = useRoleAccess({ allowedRoles: ['super_admin', 'event_admin', 'coordinator', 'registration', 'program_reporting'] });
     const [programs, setPrograms] = useState<Program[]>([]);
     const [selectedProgramId, setSelectedProgramId] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['all']);
+    const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
     const [selectedGender, setSelectedGender] = useState('all');
     const [loading, setLoading] = useState(false);
 
@@ -29,8 +30,8 @@ export default function ReportsPage() {
         { value: 'confirmed', label: 'Confirmed' },
         { value: 'reported', label: 'Reported' },
         { value: 'participated', label: 'Participated' },
+        { value: 'completed', label: 'Completed' },
         // { value: 'absent', label: 'Absent' },
-        // { value: 'completed', label: 'Completed' },
         { value: 'cancelled', label: 'Cancelled' },
         // { value: 'rejected', label: 'Rejected' },
     ];
@@ -47,6 +48,36 @@ export default function ReportsPage() {
             fetchPrograms();
         }
     }, [userRole]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.status-dropdown-container')) {
+                setStatusDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const toggleStatus = (value: string) => {
+        if (value === 'all') {
+            setSelectedStatuses(['all']);
+            return;
+        }
+
+        let newStatuses = selectedStatuses.includes('all') ? [] : [...selectedStatuses];
+
+        if (newStatuses.includes(value)) {
+            newStatuses = newStatuses.filter(s => s !== value);
+        } else {
+            newStatuses.push(value);
+        }
+
+        if (newStatuses.length === 0) newStatuses = ['all'];
+        setSelectedStatuses(newStatuses);
+    };
 
     const fetchPrograms = async () => {
         try {
@@ -71,30 +102,37 @@ export default function ReportsPage() {
             let filename = '';
 
             const params = new URLSearchParams();
-            if (selectedStatus !== 'all') {
-                params.append('status', selectedStatus);
+            if (selectedStatuses.includes('all')) {
+                params.append('status', 'all');
+            } else {
+                params.append('status', selectedStatuses.join(','));
             }
+            
             if (selectedGender !== 'all') {
                 params.append('gender', selectedGender);
             }
 
+            const statusLabel = selectedStatuses.includes('all') ? 'all' : selectedStatuses.join('_');
+
             switch (type) {
                 case 'college':
                     url = `/exports/college-wise?${params.toString()}`;
-                    filename = `college_wise_registrations_${selectedStatus}.xlsx`;
+                    filename = `college_wise_registrations_${statusLabel}.xlsx`;
                     break;
                 case 'program':
                     url = `/exports/program-wise/${selectedProgramId}?${params.toString()}`;
-                    const selectedProgram = programs.find(p => p._id === selectedProgramId);
-                    filename = `${selectedProgram?.name || 'program'}_registrations_${selectedStatus}.xlsx`;
+                    const selectedProgram = selectedProgramId === 'all' 
+                        ? { name: 'all_programs' } 
+                        : programs.find(p => p._id === selectedProgramId);
+                    filename = `${selectedProgram?.name || 'program'}_registrations_${statusLabel}.xlsx`;
                     break;
                 case 'distinct':
                     url = `/exports/participants-distinct?${params.toString()}`;
-                    filename = `college_wise_distinct_participants_${selectedStatus}.xlsx`;
+                    filename = `college_wise_distinct_participants_${statusLabel}.xlsx`;
                     break;
                 case 'non-distinct':
                     url = `/exports/participants-non-distinct?${params.toString()}`;
-                    filename = `college_wise_total_entries_${selectedStatus}.xlsx`;
+                    filename = `college_wise_total_entries_${statusLabel}.xlsx`;
                     break;
                 case 'student-ranking':
                     url = `/exports/student-ranking?${params.toString()}`;
@@ -103,6 +141,10 @@ export default function ReportsPage() {
                 case 'college-leaderboard':
                     url = `/exports/college-leaderboard`;
                     filename = `overall_college_leaderboard.xlsx`;
+                    break;
+                case 'participated-list':
+                    url = `/exports/participants-list?${params.toString()}`;
+                    filename = `participated_list_${statusLabel}.xlsx`;
                     break;
             }
 
@@ -140,23 +182,49 @@ export default function ReportsPage() {
                     <p className="text-xs text-muted-foreground">Apply filters to refine your data exports.</p>
                 </div>
                 <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    <div className="w-full md:w-48">
+                    <div className="w-full md:w-64 status-dropdown-container">
                         <label className="text-xs font-bold mb-1.5 block">Registration Status</label>
                         <div className="relative">
-                            <select 
-                                value={selectedStatus} 
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                            <button 
+                                onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+                                className="w-full h-12 bg-secondary border border-border rounded-xl px-4 text-sm font-medium flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             >
-                                {statuses.map(s => (
-                                    <option key={s.value} value={s.value}>{s.label}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                <span className="truncate">
+                                    {selectedStatuses.includes('all') 
+                                        ? 'All Statuses' 
+                                        : `${selectedStatuses.length} Status${selectedStatuses.length > 1 ? 'es' : ''} Selected`}
+                                </span>
+                                <svg className={`w-4 h-4 fill-current text-muted-foreground transition-transform ${statusDropdownOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20">
                                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                                 </svg>
-                            </div>
+                            </button>
+                            
+                            {statusDropdownOpen && (
+                                <div className="absolute z-50 top-full left-0 w-full mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden flex flex-col max-h-60">
+                                    <div className="overflow-y-auto p-2 space-y-1">
+                                        {statuses.map(s => (
+                                            <div 
+                                                key={s.value} 
+                                                onClick={() => toggleStatus(s.value)}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                                                    selectedStatuses.includes(s.value) 
+                                                        ? 'bg-primary/10 text-primary' 
+                                                        : 'hover:bg-secondary'
+                                                }`}
+                                            >
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                                                    selectedStatuses.includes(s.value) 
+                                                        ? 'bg-primary border-primary text-primary-foreground' 
+                                                        : 'border-muted-foreground'
+                                                }`}>
+                                                    {selectedStatuses.includes(s.value) && <Check size={12} strokeWidth={3} />}
+                                                </div>
+                                                <span className="text-sm font-medium">{s.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -283,7 +351,10 @@ export default function ReportsPage() {
                     <div className="space-y-4 mb-8 flex-1">
                         <SearchableSelect 
                             label="Search Program"
-                            options={programs.map(p => ({ _id: p._id, name: `${p.name} (${p.category})` }))}
+                            options={[
+                                { _id: 'all', name: 'ALL PROGRAMS' },
+                                ...programs.map(p => ({ _id: p._id, name: `${p.name} (${p.category})` }))
+                            ]}
                             value={selectedProgramId}
                             onChange={setSelectedProgramId}
                             placeholder="Type to search programs..."
@@ -357,6 +428,34 @@ export default function ReportsPage() {
                             <FileDown className="h-5 w-5" />
                         )}
                         Export Total Entries
+                    </button>
+                </div>
+
+                {/* Participated List Report Card */}
+                <div className="bg-card border border-border rounded-3xl p-8 shadow-sm flex flex-col h-full hover:border-primary/20 transition-all group lg:col-span-2 border-indigo-500/10 bg-indigo-500/5">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="p-4 bg-indigo-500/10 rounded-2xl group-hover:bg-indigo-500/20 transition-colors">
+                            <Users className="h-8 w-8 text-indigo-500" />
+                        </div>
+                        <span className="bg-indigo-500/10 text-indigo-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest italic">Detailed Report</span>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-3">Participated List</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8 flex-1">
+                        Generate a flat list of registrations filtered by status. Ideal for checking who confirmed, participated or completed. Ordered by Program name. Includes chest numbers and ranks.
+                    </p>
+
+                    <button 
+                        onClick={() => handleExport('participated-list')}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-indigo-500/20"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <FileDown className="h-5 w-5" />
+                        )}
+                        Export Participated List Excel
                     </button>
                 </div>
             </div>
